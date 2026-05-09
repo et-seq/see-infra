@@ -1,11 +1,11 @@
 import { redirectDefinitions } from "./destinations";
-import { canonicalizeJurisdictionSegments } from "./jurisdictions";
 import type {
   ListedRedirect,
   RedirectDefinition,
   RedirectMatch,
   RedirectStatus,
   RouteDefinition,
+  RouteSegment,
 } from "./types";
 
 const DEFAULT_REDIRECT_STATUS: RedirectStatus = 302;
@@ -15,11 +15,19 @@ const ROUTE_SEPARATOR = "/";
 interface IndexedRedirect {
   readonly id: string;
   readonly target: string;
+  readonly targetBase: string;
+  readonly targetHash: string;
+  readonly targetSearch: string;
   readonly status: RedirectStatus;
   readonly preserveQuery: boolean;
   readonly segments: readonly string[];
   readonly description: string;
   readonly kind: RouteDefinition["kind"];
+}
+
+interface BuiltRedirectIndex {
+  readonly routeIndex: ReadonlyMap<string, IndexedRedirect>;
+  readonly listedRedirects: readonly ListedRedirect[];
 }
 
 export interface RedirectIndex {
@@ -40,17 +48,11 @@ export function listRedirects(): readonly ListedRedirect[] {
 export function createRedirectIndex(
   definitions: readonly RedirectDefinition[],
 ): RedirectIndex {
-  const routeIndex = buildRouteIndex(definitions);
+  const { routeIndex, listedRedirects } = buildRouteIndex(definitions);
 
   return {
     resolve(pathname) {
-      const segments = normalizeSegments(pathname);
-      const directRouteKey = routeKeyFromSegments(segments);
-      const jurisdictionRouteKey = routeKeyFromSegments(
-        canonicalizeJurisdictionSegments(segments),
-      );
-      const match =
-        routeIndex.get(directRouteKey) ?? routeIndex.get(jurisdictionRouteKey);
+      const match = routeIndex.get(routeKeyFromPathname(pathname));
 
       if (!match) {
         return undefined;
@@ -59,6 +61,9 @@ export function createRedirectIndex(
       return {
         id: match.id,
         target: match.target,
+        targetBase: match.targetBase,
+        targetHash: match.targetHash,
+        targetSearch: match.targetSearch,
         status: match.status,
         preserveQuery: match.preserveQuery,
         segments: match.segments,
@@ -66,22 +71,9 @@ export function createRedirectIndex(
       };
     },
     list() {
-      return [...routeIndex.values()].map((entry) => ({
-        id: entry.id,
-        path: `/${entry.segments.join(ROUTE_SEPARATOR)}`,
-        target: entry.target,
-        status: entry.status,
-        kind: entry.kind,
-        description: entry.description,
-      }));
+      return listedRedirects;
     },
   };
-}
-
-export function jurisdictionRouteKeyFromPathname(pathname: string): string {
-  return routeKeyFromSegments(
-    canonicalizeJurisdictionSegments(normalizeSegments(pathname)),
-  );
 }
 
 export function routeKeyFromPathname(pathname: string): string {
@@ -90,8 +82,9 @@ export function routeKeyFromPathname(pathname: string): string {
 
 function buildRouteIndex(
   definitions: readonly RedirectDefinition[],
-): ReadonlyMap<string, IndexedRedirect> {
+): BuiltRedirectIndex {
   const index = new Map<string, IndexedRedirect>();
+  const listedRedirects: ListedRedirect[] = [];
   const definitionIds = new Set<string>();
 
   for (const definition of definitions) {
@@ -129,44 +122,62 @@ function buildRouteIndex(
         );
       }
 
-      const normalizedSegments = normalizeSegments(route.segments);
-      const segments =
-        route.kind === "jurisdiction"
-          ? canonicalizeJurisdictionSegments(normalizedSegments)
-          : normalizedSegments;
-      const routeKey = routeKeyFromSegments(segments);
+      const { canonicalSegments, indexedSegmentSets } = normalizeRouteSegments(
+        route.segments,
+      );
+      const canonicalRouteKey = routeKeyFromSegments(canonicalSegments);
 
-      if (!routeKey) {
+      if (!canonicalRouteKey) {
         throw new Error(
           `Redirect route in "${definition.id}" must contain at least one non-empty segment`,
         );
       }
 
-      const existingRoute = index.get(routeKey);
-
-      if (existingRoute) {
-        throw new Error(
-          `Duplicate redirect route "/${routeKey}" in "${definition.id}" and "${existingRoute.id}"`,
-        );
-      }
-
-      index.set(routeKey, {
+      const indexedRedirect: IndexedRedirect = {
         id: normalizedId,
-        target,
+        target: target.href,
+        targetBase: target.base,
+        targetHash: target.hash,
+        targetSearch: target.search,
         status,
         preserveQuery:
           route.preserveQuery ?? definition.preserveQuery ?? true,
-        segments,
+        segments: canonicalSegments,
         description: definition.description,
         kind: route.kind,
+      };
+
+      for (const indexedSegments of indexedSegmentSets) {
+        const routeKey = routeKeyFromSegments(indexedSegments);
+        const existingRoute = index.get(routeKey);
+
+        if (existingRoute) {
+          throw new Error(
+            `Duplicate redirect route "/${routeKey}" in "${definition.id}" and "${existingRoute.id}"`,
+          );
+        }
+
+        index.set(routeKey, indexedRedirect);
+      }
+
+      listedRedirects.push({
+        id: indexedRedirect.id,
+        path: `/${canonicalSegments.join(ROUTE_SEPARATOR)}`,
+        target: indexedRedirect.target,
+        status: indexedRedirect.status,
+        kind: indexedRedirect.kind,
+        description: indexedRedirect.description,
       });
     }
   }
 
-  return index;
+  return {
+    routeIndex: index,
+    listedRedirects,
+  };
 }
 
-function normalizeRedirectTarget(definition: RedirectDefinition): string {
+function normalizeRedirectTarget(definition: RedirectDefinition) {
   let target: URL;
 
   try {
@@ -183,7 +194,18 @@ function normalizeRedirectTarget(definition: RedirectDefinition): string {
     );
   }
 
-  return target.toString();
+  if (target.username || target.password) {
+    throw new Error(
+      `Redirect target for "${definition.id}" must not include credentials`,
+    );
+  }
+
+  return {
+    href: target.toString(),
+    base: target.origin + target.pathname,
+    hash: target.hash,
+    search: target.search,
+  };
 }
 
 function normalizeSegments(pathnameOrSegments: string | readonly string[]) {
@@ -201,6 +223,76 @@ function normalizeSegments(pathnameOrSegments: string | readonly string[]) {
   }
 
   return segments;
+}
+
+function normalizeRouteSegments(segments: readonly RouteSegment[]) {
+  const canonicalSegments: string[] = [];
+  let indexedSegmentSets: string[][] = [[]];
+
+  for (const segment of segments) {
+    const alternatives = normalizeSegmentAlternatives(segment);
+
+    if (alternatives.length === 0) {
+      throw new Error("Redirect route segments must be non-empty");
+    }
+
+    canonicalSegments.push(alternatives[0]);
+    indexedSegmentSets = indexedSegmentSets.flatMap((indexedSegments) =>
+      alternatives.map((alternative) => [...indexedSegments, alternative]),
+    );
+  }
+
+  return {
+    canonicalSegments,
+    indexedSegmentSets: dedupeSegmentSets(indexedSegmentSets),
+  };
+}
+
+function normalizeSegmentAlternatives(segment: RouteSegment) {
+  const rawAlternatives = typeof segment === "string" ? [segment] : segment;
+  const seen = new Set<string>();
+  const alternatives: string[] = [];
+
+  for (const rawAlternative of rawAlternatives) {
+    const alternative = normalizeSegment(rawAlternative);
+
+    if (!alternative || seen.has(alternative)) {
+      continue;
+    }
+
+    seen.add(alternative);
+    alternatives.push(alternative);
+  }
+
+  return alternatives;
+}
+
+function normalizeSegment(segment: string) {
+  const normalizedSegment = safeDecode(segment).trim().toLowerCase();
+
+  if (normalizedSegment.includes(ROUTE_SEPARATOR)) {
+    throw new Error("Redirect route segments cannot include slashes");
+  }
+
+  return normalizedSegment;
+}
+
+function dedupeSegmentSets(segmentSets: readonly string[][]) {
+  const seen = new Set<string>();
+  const dedupedSegmentSets: string[][] = [];
+
+  for (const segmentSet of segmentSets) {
+    const routeKey = routeKeyFromSegments(segmentSet);
+
+    if (seen.has(routeKey)) {
+      continue;
+    }
+
+    seen.add(routeKey);
+    dedupedSegmentSets.push(segmentSet);
+  }
+
+  return dedupedSegmentSets;
 }
 
 function routeKeyFromSegments(segments: readonly string[]): string {

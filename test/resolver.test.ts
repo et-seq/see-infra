@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  canonicalizeJurisdictionSegments,
   createRedirectIndex,
   defineRedirectDestination,
-  jurisdictionRouteKeyFromPathname,
   listRedirects,
   resolveRedirect,
   routeKeyFromPathname,
@@ -24,6 +22,10 @@ describe("redirect resolver", () => {
       id: "scotus",
       target: "https://www.supremecourt.gov/",
     });
+    expect(resolveRedirect("/usa/scotus")).toMatchObject({
+      id: "scotus",
+      target: "https://www.supremecourt.gov/",
+    });
   });
 
   it("normalizes case and trailing slashes", () => {
@@ -36,21 +38,7 @@ describe("redirect resolver", () => {
     });
   });
 
-  it("canonicalizes sub-jurisdiction aliases", () => {
-    expect(canonicalizeJurisdictionSegments(["us", "cal", "court"])).toEqual([
-      "us",
-      "ca",
-      "court",
-    ]);
-    expect(
-      canonicalizeJurisdictionSegments(["usa", "california", "court"]),
-    ).toEqual(["us", "ca", "court"]);
-    expect(
-      canonicalizeJurisdictionSegments(["aus", "victoria", "vsc"]),
-    ).toEqual(["aus", "vic", "vsc"]);
-  });
-
-  it("uses jurisdiction aliases when resolving jurisdiction routes", () => {
+  it("uses route-local aliases when resolving jurisdiction routes", () => {
     const redirectIndex = createRedirectIndex([
       defineRedirectDestination({
         id: "california-court-test",
@@ -58,21 +46,50 @@ describe("redirect resolver", () => {
         description: "California court test fixture",
         routes: [
           {
-            segments: ["us", "ca", "court"],
+            segments: [
+              ["us", "usa", "united-states"],
+              ["ca", "cal", "california"],
+              "court",
+            ],
             kind: "jurisdiction",
           },
         ],
       }),
     ]);
 
-    expect(jurisdictionRouteKeyFromPathname("/USA/CAL/court")).toBe(
-      "us/ca/court",
-    );
     expect(redirectIndex.resolve("/us/cal/court")).toMatchObject({
       target: "https://example.test/california-court",
     });
     expect(redirectIndex.resolve("/usa/california/court")).toMatchObject({
       target: "https://example.test/california-court",
+    });
+    expect(redirectIndex.list()).toEqual([
+      expect.objectContaining({
+        path: "/us/ca/court",
+      }),
+    ]);
+  });
+
+  it("precomputes target URL parts for low-overhead response construction", () => {
+    const redirectIndex = createRedirectIndex([
+      defineRedirectDestination({
+        id: "target-parts-test",
+        target: "https://example.test/path?existing=1#section",
+        description: "Target parts test fixture",
+        routes: [
+          {
+            segments: ["target-parts"],
+            kind: "shortcut",
+          },
+        ],
+      }),
+    ]);
+
+    expect(redirectIndex.resolve("/target-parts")).toMatchObject({
+      target: "https://example.test/path?existing=1#section",
+      targetBase: "https://example.test/path",
+      targetHash: "#section",
+      targetSearch: "?existing=1",
     });
   });
 
@@ -110,6 +127,26 @@ describe("redirect resolver", () => {
         }),
       ]),
     ).toThrow('Redirect target for "invalid-target" must use http or https');
+  });
+
+  it("rejects redirect targets with credentials", () => {
+    expect(() =>
+      createRedirectIndex([
+        defineRedirectDestination({
+          id: "credential-target",
+          target: "https://user:password@example.test/path",
+          description: "Credential target fixture",
+          routes: [
+            {
+              segments: ["credential-target"],
+              kind: "shortcut",
+            },
+          ],
+        }),
+      ]),
+    ).toThrow(
+      'Redirect target for "credential-target" must not include credentials',
+    );
   });
 
   it("rejects invalid redirect status values", () => {

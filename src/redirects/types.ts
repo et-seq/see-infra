@@ -1,6 +1,7 @@
 export type RedirectStatus = 301 | 302 | 307 | 308;
 export type RouteKind = "shortcut" | "jurisdiction";
-export type PathSegments = readonly [string, ...string[]];
+export type RouteSegment = string | readonly [string, ...string[]];
+export type PathSegments = readonly [RouteSegment, ...RouteSegment[]];
 
 export interface RouteDefinition {
   readonly segments: PathSegments;
@@ -18,16 +19,12 @@ export interface RedirectDefinition {
   readonly routes: readonly RouteDefinition[];
 }
 
-export interface JurisdictionDefinition {
-  readonly slug: string;
-  readonly name: string;
-  readonly aliases?: readonly string[];
-  readonly children?: readonly JurisdictionDefinition[];
-}
-
 export interface RedirectMatch {
   readonly id: string;
   readonly target: string;
+  readonly targetBase: string;
+  readonly targetHash: string;
+  readonly targetSearch: string;
   readonly status: RedirectStatus;
   readonly preserveQuery: boolean;
   readonly segments: readonly string[];

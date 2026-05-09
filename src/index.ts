@@ -24,38 +24,80 @@ app.get("/__health", (context) => {
 });
 
 app.all("*", (context) => {
-  const requestUrl = new URL(context.req.url);
-  const redirect = resolveRedirect(requestUrl.pathname);
+  const requestTarget = parseRequestTarget(context.req.raw.url);
+  const redirect = resolveRedirect(requestTarget.pathname);
 
   if (!redirect) {
     return context.json(
       {
         error: "redirect_not_found",
-        path: requestUrl.pathname,
+        path: requestTarget.pathname,
       },
       404,
     );
   }
 
-  const destination = new URL(redirect.target);
-
-  if (redirect.preserveQuery) {
-    appendSearchParams(destination.searchParams, requestUrl.searchParams);
-  }
-
-  return context.redirect(destination.toString(), redirect.status);
+  return new Response(null, {
+    status: redirect.status,
+    headers: {
+      Location: getRedirectLocation(redirect, requestTarget.search),
+    },
+  });
 });
 
-// Preserve the destination's own query string and append request query
-// parameters. This avoids route-specific code for targets that later need
-// search parameters while keeping destination URLs authoritative.
-function appendSearchParams(
-  destinationParams: URLSearchParams,
-  requestParams: URLSearchParams,
+function parseRequestTarget(url: string) {
+  const authorityStart = url.indexOf("://");
+  const pathStart =
+    authorityStart === -1 ? 0 : url.indexOf("/", authorityStart + 3);
+
+  if (pathStart === -1) {
+    return {
+      pathname: "/",
+      search: "",
+    };
+  }
+
+  const queryStart = url.indexOf("?", pathStart);
+
+  if (queryStart === -1) {
+    return {
+      pathname: url.slice(pathStart) || "/",
+      search: "",
+    };
+  }
+
+  return {
+    pathname: url.slice(pathStart, queryStart) || "/",
+    search: url.slice(queryStart),
+  };
+}
+
+function getRedirectLocation(
+  redirect: {
+    readonly target: string;
+    readonly targetBase: string;
+    readonly targetHash: string;
+    readonly targetSearch: string;
+    readonly preserveQuery: boolean;
+  },
+  requestSearch: string,
 ) {
-  requestParams.forEach((value, key) => {
-    destinationParams.append(key, value);
-  });
+  if (!redirect.preserveQuery || requestSearch.length === 0) {
+    return redirect.target;
+  }
+
+  return `${redirect.targetBase}${mergeSearch(
+    redirect.targetSearch,
+    requestSearch,
+  )}${redirect.targetHash}`;
+}
+
+function mergeSearch(targetSearch: string, requestSearch: string) {
+  if (targetSearch.length === 0) {
+    return requestSearch;
+  }
+
+  return `${targetSearch}&${requestSearch.slice(1)}`;
 }
 
 export default app;

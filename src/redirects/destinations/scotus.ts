@@ -12,7 +12,7 @@ export default defineRedirectDestination({
       kind: "shortcut",
     },
     {
-      segments: ["us", "scotus"],
+      segments: [["us", "usa"], "scotus"],
       kind: "jurisdiction",
     },
   ],

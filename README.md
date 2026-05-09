@@ -15,7 +15,6 @@ The Australia jurisdiction currently has no concrete redirect targets.
 
 - `src/index.ts`: Worker entrypoint and HTTP redirect handling.
 - `src/redirects/resolver.ts`: route indexing, path normalization, duplicate-route checks, and redirect lookup.
-- `src/redirects/jurisdictions.ts`: canonical jurisdiction slugs and aliases.
 - `src/redirects/destinations/*.ts`: one file per redirect destination.
 - `scripts/generate-destination-manifest.mjs`: scans destination files and generates the import manifest.
 - `wrangler.jsonc`: Cloudflare Worker deployment and custom domain configuration.
@@ -79,7 +78,7 @@ The resolver tests cover:
 - shortcut resolution
 - jurisdiction-specific resolution
 - case-insensitive path matching
-- top-level and sub-jurisdiction aliases
+- route-local top-level and sub-jurisdiction aliases
 - duplicate redirect ID rejection
 - non-HTTP target rejection
 - unresolved path behavior
@@ -143,7 +142,7 @@ Route fields:
 - `target`: absolute `https://` or `http://` URL.
 - `description`: human-readable target name.
 - `routes`: one or more path definitions.
-- `segments`: path parts without slashes, for example `["aus", "vic", "vsc"]`.
+- `segments`: path parts without slashes, using strings or segment alias arrays.
 - `kind`: `"shortcut"` for direct shortcuts or `"jurisdiction"` for jurisdiction paths.
 - `defaultStatus`: optional redirect status for all routes in the file.
 - `status`: optional route-specific redirect status.
@@ -153,25 +152,44 @@ Supported redirect status values are `301`, `302`, `307`, and `308`. The default
 
 ## Jurisdictions And Aliases
 
-Jurisdiction routes should use canonical jurisdiction slugs in destination files. Incoming requests can use canonical slugs or configured aliases.
+There is no central jurisdiction registry in the runtime path. Jurisdiction aliases are defined in the destination file that needs them, so adding a new destination still requires only one new `.ts` file.
 
-Current top-level jurisdictions:
+For a route without aliases, use string segments:
 
-- `us`: United States, aliases `usa` and `united-states`
-- `aus`: Australia, aliases `au` and `australia`
+```ts
+segments: ["aus", "vic", "vsc"]
+```
 
-Current sub-jurisdictions:
+For a route with aliases, replace a segment string with an array. The first value is the canonical slug used in route listings; later values are request aliases:
 
-- `us/ca`: California, aliases `cal` and `california`
-- `aus/vic`: Victoria, alias `victoria`
+```ts
+segments: [
+  ["us", "usa", "united-states"],
+  ["ca", "cal", "california"],
+  "court",
+]
+```
 
-Example: a destination route defined as `["us", "ca", "court"]` can be reached through all of these request paths:
+That single route can be reached through paths such as:
 
 - `/us/ca/court`
 - `/us/cal/court`
 - `/usa/california/court`
 
-If a destination uses a jurisdiction path whose slugs are not listed in `src/redirects/jurisdictions.ts`, the path still works exactly as written. Add jurisdiction metadata only when aliases or display metadata are needed.
+Aliases are expanded when the Worker module initializes. Request-time redirect lookup remains a normalized single-key map lookup.
+
+## Runtime Path
+
+The redirect runtime is intentionally small:
+
+- destination files are imported through a generated manifest
+- route aliases are expanded once during module initialization
+- redirect targets are parsed once during module initialization
+- each request extracts only the path and query string from the request URL
+- each redirect request performs one normalized map lookup
+- redirect responses are constructed directly with `Response` and a `Location` header
+
+This keeps Cloudflare CPU work low while preserving the single-file destination authoring model.
 
 ## Cloudflare Configuration
 
