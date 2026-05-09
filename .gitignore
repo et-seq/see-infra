@@ -7,6 +7,9 @@ node_modules/
 dist/
 build/
 
+# Generated redirect registry
+src/redirects/destinations/manifest.generated.ts
+
 # Local secrets and environment files
 .dev.vars
 .env

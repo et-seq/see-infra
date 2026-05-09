@@ -5,9 +5,14 @@
   "type": "module",
   "description": "Cloudflare Worker redirector for see.etseq.co legal reference shortcuts.",
   "scripts": {
+    "generate:destinations": "node scripts/generate-destination-manifest.mjs",
+    "predev": "npm run generate:destinations",
     "dev": "wrangler dev",
+    "predeploy": "npm run generate:destinations",
     "deploy": "wrangler deploy",
+    "pretypecheck": "npm run generate:destinations",
     "typecheck": "tsc --noEmit",
+    "pretest": "npm run generate:destinations",
     "test": "vitest run",
     "check": "npm run typecheck && npm test"
   },
