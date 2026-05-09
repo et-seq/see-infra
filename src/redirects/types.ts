@@ -1,14 +1,42 @@
 export type RedirectStatus = 301 | 302 | 307 | 308;
 export type RouteKind = "shortcut" | "jurisdiction";
-export type RouteSegment = string | readonly [string, ...string[]];
-export type PathSegments = readonly [RouteSegment, ...RouteSegment[]];
+export type ShortcutRouteSegment = string | readonly [string, ...string[]];
+export type ShortcutPathSegments = readonly [
+  ShortcutRouteSegment,
+  ...ShortcutRouteSegment[],
+];
 
-export interface RouteDefinition {
-  readonly segments: PathSegments;
-  readonly kind: RouteKind;
+const jurisdictionSegmentBrand: unique symbol = Symbol("jurisdictionSegment");
+
+export interface JurisdictionSegment {
+  readonly canonical: string;
+  readonly aliases: readonly string[];
+  readonly [jurisdictionSegmentBrand]: true;
+}
+
+export type JurisdictionPathSegments = readonly [
+  JurisdictionSegment,
+  ...Array<JurisdictionSegment | string>,
+];
+
+interface BaseRouteDefinition {
   readonly status?: RedirectStatus;
   readonly preserveQuery?: boolean;
 }
+
+export interface ShortcutRouteDefinition extends BaseRouteDefinition {
+  readonly segments: ShortcutPathSegments;
+  readonly kind: "shortcut";
+}
+
+export interface JurisdictionRouteDefinition extends BaseRouteDefinition {
+  readonly segments: JurisdictionPathSegments;
+  readonly kind: "jurisdiction";
+}
+
+export type RouteDefinition =
+  | ShortcutRouteDefinition
+  | JurisdictionRouteDefinition;
 
 export interface RedirectDefinition {
   readonly id: string;
@@ -38,6 +66,32 @@ export interface ListedRedirect {
   readonly status: RedirectStatus;
   readonly kind: RouteKind;
   readonly description: string;
+}
+
+export function defineJurisdictionSegment(
+  canonical: string,
+  aliases: readonly string[] = [],
+): JurisdictionSegment {
+  const normalizedCanonical = normalizeJurisdictionPart(canonical);
+  const normalizedAliases = aliases
+    .map(normalizeJurisdictionPart)
+    .filter((alias): alias is string => Boolean(alias));
+
+  return {
+    canonical: normalizedCanonical,
+    aliases: [...new Set(normalizedAliases)],
+    [jurisdictionSegmentBrand]: true,
+  };
+}
+
+function normalizeJurisdictionPart(part: string) {
+  const normalizedPart = part.trim().toLowerCase();
+
+  if (normalizedPart.includes("/")) {
+    throw new Error("Jurisdiction segments cannot include slashes");
+  }
+
+  return normalizedPart;
 }
 
 export function defineRedirectDestination<T extends RedirectDefinition>(

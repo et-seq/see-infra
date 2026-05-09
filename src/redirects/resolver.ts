@@ -4,8 +4,9 @@ import type {
   RedirectDefinition,
   RedirectMatch,
   RedirectStatus,
+  JurisdictionPathSegments,
   RouteDefinition,
-  RouteSegment,
+  ShortcutRouteSegment,
 } from "./types";
 
 const DEFAULT_REDIRECT_STATUS: RedirectStatus = 302;
@@ -107,12 +108,6 @@ function buildRouteIndex(
     }
 
     for (const route of definition.routes) {
-      if (route.kind !== "shortcut" && route.kind !== "jurisdiction") {
-        throw new Error(
-          `Redirect route in "${normalizedId}" has unsupported kind "${String(route.kind)}"`,
-        );
-      }
-
       const status =
         route.status ?? definition.defaultStatus ?? DEFAULT_REDIRECT_STATUS;
 
@@ -122,9 +117,10 @@ function buildRouteIndex(
         );
       }
 
-      const { canonicalSegments, indexedSegmentSets } = normalizeRouteSegments(
-        route.segments,
-      );
+      const { canonicalSegments, indexedSegmentSets } =
+        route.kind === "jurisdiction"
+          ? normalizeJurisdictionRouteSegments(route.segments)
+          : normalizeShortcutRouteSegments(route.segments);
       const canonicalRouteKey = routeKeyFromSegments(canonicalSegments);
 
       if (!canonicalRouteKey) {
@@ -225,7 +221,9 @@ function normalizeSegments(pathnameOrSegments: string | readonly string[]) {
   return segments;
 }
 
-function normalizeRouteSegments(segments: readonly RouteSegment[]) {
+function normalizeShortcutRouteSegments(
+  segments: readonly ShortcutRouteSegment[],
+) {
   const canonicalSegments: string[] = [];
   let indexedSegmentSets: string[][] = [[]];
 
@@ -248,7 +246,38 @@ function normalizeRouteSegments(segments: readonly RouteSegment[]) {
   };
 }
 
-function normalizeSegmentAlternatives(segment: RouteSegment) {
+function normalizeJurisdictionRouteSegments(
+  segments: JurisdictionPathSegments,
+) {
+  const canonicalSegments: string[] = [];
+  let indexedSegmentSets: string[][] = [[]];
+
+  for (const segment of segments) {
+    const alternatives =
+      typeof segment === "string"
+        ? normalizeSegmentAlternatives(segment)
+        : normalizeSegmentAlternatives([
+            segment.canonical,
+            ...segment.aliases,
+          ]);
+
+    if (alternatives.length === 0) {
+      throw new Error("Redirect route segments must be non-empty");
+    }
+
+    canonicalSegments.push(alternatives[0]);
+    indexedSegmentSets = indexedSegmentSets.flatMap((indexedSegments) =>
+      alternatives.map((alternative) => [...indexedSegments, alternative]),
+    );
+  }
+
+  return {
+    canonicalSegments,
+    indexedSegmentSets: dedupeSegmentSets(indexedSegmentSets),
+  };
+}
+
+function normalizeSegmentAlternatives(segment: ShortcutRouteSegment) {
   const rawAlternatives = typeof segment === "string" ? [segment] : segment;
   const seen = new Set<string>();
   const alternatives: string[] = [];

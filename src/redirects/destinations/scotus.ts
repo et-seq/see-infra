@@ -1,4 +1,5 @@
 import { defineRedirectDestination } from "../types";
+import { us } from "../jurisdictions";
 
 const SCOTUS_URL = "https://www.supremecourt.gov/";
 
@@ -12,7 +13,7 @@ export default defineRedirectDestination({
       kind: "shortcut",
     },
     {
-      segments: [["us", "usa"], "scotus"],
+      segments: [us.root, "scotus"],
       kind: "jurisdiction",
     },
   ],

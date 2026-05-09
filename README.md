@@ -15,6 +15,7 @@ The Australia jurisdiction currently has no concrete redirect targets.
 
 - `src/index.ts`: Worker entrypoint and HTTP redirect handling.
 - `src/redirects/resolver.ts`: route indexing, path normalization, duplicate-route checks, and redirect lookup.
+- `src/redirects/jurisdictions/*.ts`: declared jurisdiction segments and aliases.
 - `src/redirects/destinations/*.ts`: one file per redirect destination.
 - `scripts/generate-destination-manifest.mjs`: scans destination files and generates the import manifest.
 - `wrangler.jsonc`: Cloudflare Worker deployment and custom domain configuration.
@@ -78,7 +79,7 @@ The resolver tests cover:
 - shortcut resolution
 - jurisdiction-specific resolution
 - case-insensitive path matching
-- route-local top-level and sub-jurisdiction aliases
+- declared top-level and sub-jurisdiction aliases
 - duplicate redirect ID rejection
 - non-HTTP target rejection
 - unresolved path behavior
@@ -96,10 +97,16 @@ Add one `.ts` file per redirect target under `src/redirects/destinations/`. No i
 
 Each destination file must default-export `defineRedirectDestination(...)`.
 
+Destination files may use:
+
+- shortcut routes with string segments or local alias arrays
+- jurisdiction routes that start with declared jurisdiction segments from `src/redirects/jurisdictions`
+
 Example:
 
 ```ts
 import { defineRedirectDestination } from "../types";
+import { aus } from "../jurisdictions";
 
 export default defineRedirectDestination({
   id: "aus-fca",
@@ -107,7 +114,7 @@ export default defineRedirectDestination({
   description: "Federal Court of Australia",
   routes: [
     {
-      segments: ["aus", "fca"],
+      segments: [aus.root, "fca"],
       kind: "jurisdiction",
     },
   ],
@@ -118,6 +125,7 @@ Each destination can define multiple route aliases:
 
 ```ts
 import { defineRedirectDestination } from "../types";
+import { us } from "../jurisdictions";
 
 export default defineRedirectDestination({
   id: "scotus",
@@ -129,7 +137,7 @@ export default defineRedirectDestination({
       kind: "shortcut",
     },
     {
-      segments: ["us", "scotus"],
+      segments: [us.root, "scotus"],
       kind: "jurisdiction",
     },
   ],
@@ -152,22 +160,25 @@ Supported redirect status values are `301`, `302`, `307`, and `308`. The default
 
 ## Jurisdictions And Aliases
 
-There is no central jurisdiction registry in the runtime path. Jurisdiction aliases are defined in the destination file that needs them, so adding a new destination still requires only one new `.ts` file.
+Jurisdiction segments are explicit. Each top-level jurisdiction can have its own file under `src/redirects/jurisdictions/`; current files are `us.ts` and `aus.ts`.
 
-For a route without aliases, use string segments:
+Example jurisdiction file:
 
 ```ts
-segments: ["aus", "vic", "vsc"]
+import { defineJurisdictionSegment } from "../types";
+
+export const us = {
+  root: defineJurisdictionSegment("us", ["usa", "united-states"]),
+  ca: defineJurisdictionSegment("ca", ["cal", "california"]),
+} as const;
 ```
 
-For a route with aliases, replace a segment string with an array. The first value is the canonical slug used in route listings; later values are request aliases:
+Jurisdiction routes must start with a declared jurisdiction segment. This is checked by TypeScript during `npm run typecheck`.
 
 ```ts
-segments: [
-  ["us", "usa", "united-states"],
-  ["ca", "cal", "california"],
-  "court",
-]
+import { us } from "../jurisdictions";
+
+segments: [us.root, us.ca, "court"]
 ```
 
 That single route can be reached through paths such as:
@@ -175,6 +186,14 @@ That single route can be reached through paths such as:
 - `/us/ca/court`
 - `/us/cal/court`
 - `/usa/california/court`
+
+Shortcut routes can still use local alias arrays:
+
+```ts
+segments: [["court", "ct"]]
+```
+
+Jurisdiction alias arrays cannot be declared directly inside destination files. Add the jurisdiction segment or alias to the relevant top-level jurisdiction file instead. This is exempt from the one-file destination rule because it updates shared jurisdiction vocabulary.
 
 Aliases are expanded when the Worker module initializes. Request-time redirect lookup remains a normalized single-key map lookup.
 

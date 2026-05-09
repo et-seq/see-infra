@@ -6,6 +6,7 @@ import {
   listRedirects,
   resolveRedirect,
   routeKeyFromPathname,
+  us,
 } from "../src/redirects";
 
 describe("redirect resolver", () => {
@@ -38,7 +39,7 @@ describe("redirect resolver", () => {
     });
   });
 
-  it("uses route-local aliases when resolving jurisdiction routes", () => {
+  it("uses declared jurisdiction aliases when resolving jurisdiction routes", () => {
     const redirectIndex = createRedirectIndex([
       defineRedirectDestination({
         id: "california-court-test",
@@ -46,11 +47,7 @@ describe("redirect resolver", () => {
         description: "California court test fixture",
         routes: [
           {
-            segments: [
-              ["us", "usa", "united-states"],
-              ["ca", "cal", "california"],
-              "court",
-            ],
+            segments: [us.root, us.ca, "court"],
             kind: "jurisdiction",
           },
         ],
