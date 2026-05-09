@@ -1,4 +1,5 @@
 import { redirectDefinitions } from "./destinations";
+import { canonicalizeJurisdictionSegments } from "./jurisdictions";
 import type {
   ListedRedirect,
   RedirectDefinition,
@@ -20,39 +21,70 @@ interface IndexedRedirect {
   readonly kind: RouteDefinition["kind"];
 }
 
-const routeIndex = buildRouteIndex(redirectDefinitions);
+export interface RedirectIndex {
+  readonly resolve: (pathname: string) => RedirectMatch | undefined;
+  readonly list: () => readonly ListedRedirect[];
+}
+
+const defaultRedirectIndex = createRedirectIndex(redirectDefinitions);
 
 export function resolveRedirect(pathname: string): RedirectMatch | undefined {
-  const routeKey = routeKeyFromPathname(pathname);
-  const match = routeIndex.get(routeKey);
-
-  if (!match) {
-    return undefined;
-  }
-
-  return {
-    id: match.id,
-    target: match.target,
-    status: match.status,
-    preserveQuery: match.preserveQuery,
-    segments: match.segments,
-    description: match.description,
-  };
+  return defaultRedirectIndex.resolve(pathname);
 }
 
 export function listRedirects(): readonly ListedRedirect[] {
-  return [...routeIndex.values()].map((entry) => ({
-    id: entry.id,
-    path: `/${entry.segments.join(ROUTE_SEPARATOR)}`,
-    target: entry.target,
-    status: entry.status,
-    kind: entry.kind,
-    description: entry.description,
-  }));
+  return defaultRedirectIndex.list();
+}
+
+export function createRedirectIndex(
+  definitions: readonly RedirectDefinition[],
+): RedirectIndex {
+  const routeIndex = buildRouteIndex(definitions);
+
+  return {
+    resolve(pathname) {
+      const segments = normalizeSegments(pathname);
+      const directRouteKey = routeKeyFromSegments(segments);
+      const jurisdictionRouteKey = routeKeyFromSegments(
+        canonicalizeJurisdictionSegments(segments),
+      );
+      const match =
+        routeIndex.get(directRouteKey) ?? routeIndex.get(jurisdictionRouteKey);
+
+      if (!match) {
+        return undefined;
+      }
+
+      return {
+        id: match.id,
+        target: match.target,
+        status: match.status,
+        preserveQuery: match.preserveQuery,
+        segments: match.segments,
+        description: match.description,
+      };
+    },
+    list() {
+      return [...routeIndex.values()].map((entry) => ({
+        id: entry.id,
+        path: `/${entry.segments.join(ROUTE_SEPARATOR)}`,
+        target: entry.target,
+        status: entry.status,
+        kind: entry.kind,
+        description: entry.description,
+      }));
+    },
+  };
+}
+
+export function jurisdictionRouteKeyFromPathname(pathname: string): string {
+  return routeKeyFromSegments(
+    canonicalizeJurisdictionSegments(normalizeSegments(pathname)),
+  );
 }
 
 export function routeKeyFromPathname(pathname: string): string {
-  return normalizeSegments(pathname).join(ROUTE_SEPARATOR);
+  return routeKeyFromSegments(normalizeSegments(pathname));
 }
 
 function buildRouteIndex(
@@ -64,8 +96,12 @@ function buildRouteIndex(
     const target = new URL(definition.target).toString();
 
     for (const route of definition.routes) {
-      const segments = normalizeSegments(route.segments);
-      const routeKey = segments.join(ROUTE_SEPARATOR);
+      const normalizedSegments = normalizeSegments(route.segments);
+      const segments =
+        route.kind === "jurisdiction"
+          ? canonicalizeJurisdictionSegments(normalizedSegments)
+          : normalizedSegments;
+      const routeKey = routeKeyFromSegments(segments);
       const existingRoute = index.get(routeKey);
 
       if (existingRoute) {
@@ -106,6 +142,10 @@ function normalizeSegments(pathnameOrSegments: string | readonly string[]) {
   }
 
   return segments;
+}
+
+function routeKeyFromSegments(segments: readonly string[]): string {
+  return segments.join(ROUTE_SEPARATOR);
 }
 
 function safeDecode(segment: string) {

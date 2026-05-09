@@ -9,6 +9,8 @@ Cloudflare Worker redirector for `see.etseq.co/*`.
 
 The `us` and `aus` top-level jurisdictions are declared in `src/redirects/jurisdictions.ts`. The Australia jurisdiction currently has no concrete redirect targets.
 
+Route matching is case-insensitive.
+
 ## Development
 
 ```sh
@@ -30,6 +32,8 @@ Add one file per redirect target under `src/redirects/destinations/`. The regist
 Each redirect target can define multiple route aliases, so shortcut and jurisdiction-specific paths can point to the same destination without duplicating resolver logic.
 
 This keeps each new destination to one new `.ts` file.
+
+Jurisdiction routes should use canonical jurisdiction slugs. Sub-jurisdiction aliases are resolved automatically, so a route defined as `["us", "ca", "court"]` can be reached through paths such as `/us/ca/court`, `/us/cal/court`, or `/usa/california/court`. Current sub-jurisdiction metadata includes California under `us` and Victoria under `aus`.
 
 Example destination file:
 

@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { listRedirects, resolveRedirect, routeKeyFromPathname } from "../src/redirects";
+import {
+  canonicalizeJurisdictionSegments,
+  createRedirectIndex,
+  defineRedirectDestination,
+  jurisdictionRouteKeyFromPathname,
+  listRedirects,
+  resolveRedirect,
+  routeKeyFromPathname,
+} from "../src/redirects";
 
 describe("redirect resolver", () => {
   it("resolves the SCOTUS shortcut", () => {
@@ -20,8 +28,51 @@ describe("redirect resolver", () => {
 
   it("normalizes case and trailing slashes", () => {
     expect(routeKeyFromPathname("/US/SCOTUS/")).toBe("us/scotus");
+    expect(resolveRedirect("/ScOtUs")).toMatchObject({
+      target: "https://www.supremecourt.gov/",
+    });
     expect(resolveRedirect("/US/SCOTUS/")).toMatchObject({
       target: "https://www.supremecourt.gov/",
+    });
+  });
+
+  it("canonicalizes sub-jurisdiction aliases", () => {
+    expect(canonicalizeJurisdictionSegments(["us", "cal", "court"])).toEqual([
+      "us",
+      "ca",
+      "court",
+    ]);
+    expect(
+      canonicalizeJurisdictionSegments(["usa", "california", "court"]),
+    ).toEqual(["us", "ca", "court"]);
+    expect(
+      canonicalizeJurisdictionSegments(["aus", "victoria", "vsc"]),
+    ).toEqual(["aus", "vic", "vsc"]);
+  });
+
+  it("uses jurisdiction aliases when resolving jurisdiction routes", () => {
+    const redirectIndex = createRedirectIndex([
+      defineRedirectDestination({
+        id: "california-court-test",
+        target: "https://example.test/california-court",
+        description: "California court test fixture",
+        routes: [
+          {
+            segments: ["us", "ca", "court"],
+            kind: "jurisdiction",
+          },
+        ],
+      }),
+    ]);
+
+    expect(jurisdictionRouteKeyFromPathname("/USA/CAL/court")).toBe(
+      "us/ca/court",
+    );
+    expect(redirectIndex.resolve("/us/cal/court")).toMatchObject({
+      target: "https://example.test/california-court",
+    });
+    expect(redirectIndex.resolve("/usa/california/court")).toMatchObject({
+      target: "https://example.test/california-court",
     });
   });
 

@@ -1,10 +1,16 @@
 export {
+  createRedirectIndex,
+  jurisdictionRouteKeyFromPathname,
   listRedirects,
   resolveRedirect,
   routeKeyFromPathname,
 } from "./resolver";
-export { jurisdictions } from "./jurisdictions";
+export {
+  canonicalizeJurisdictionSegments,
+  jurisdictions,
+} from "./jurisdictions";
 export { defineRedirectDestination } from "./types";
+export type { RedirectIndex } from "./resolver";
 export type {
   JurisdictionDefinition,
   ListedRedirect,

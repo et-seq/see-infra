@@ -21,6 +21,7 @@ export interface RedirectDefinition {
 export interface JurisdictionDefinition {
   readonly slug: string;
   readonly name: string;
+  readonly aliases?: readonly string[];
   readonly children?: readonly JurisdictionDefinition[];
 }
 
