@@ -192,6 +192,7 @@ Deployment expects:
 
 - Cloudflare account access to the `etseq.co` zone.
 - A configured Wrangler login or `CLOUDFLARE_API_TOKEN`.
+- A configured `HEALTHCHECK_TOKEN` Worker secret if the `/__health` endpoint will be used.
 - No manual `see.etseq.co` DNS record with the same hostname. If a previous route-based setup created a proxied `A`, `AAAA`, or `CNAME` record for `see`, remove it before using the custom domain.
 
 Deploy:
@@ -207,6 +208,28 @@ npm run deploy:dry-run
 ```
 
 When adding environment-specific settings later, prefer Wrangler `env` blocks rather than branching in Worker code.
+
+## Health Check
+
+`/__health` is intentionally not public. It returns `404` unless the request includes an `x-health-token` header matching the `HEALTHCHECK_TOKEN` Worker secret. A valid health check returns only:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+Set the secret with:
+
+```sh
+wrangler secret put HEALTHCHECK_TOKEN
+```
+
+Example request:
+
+```sh
+curl -H "x-health-token: $HEALTHCHECK_TOKEN" https://see.etseq.co/__health
+```
 
 ## Generated Files
 

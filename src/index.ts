@@ -1,15 +1,25 @@
 import { Hono } from "hono";
 
-import { listRedirects, resolveRedirect } from "./redirects";
+import { resolveRedirect } from "./redirects";
 
-type WorkerEnv = Record<string, never>;
+interface WorkerEnv {
+  readonly HEALTHCHECK_TOKEN?: string;
+}
+
+const HEALTHCHECK_TOKEN_HEADER = "x-health-token";
 
 const app = new Hono<{ Bindings: WorkerEnv }>();
 
 app.get("/__health", (context) => {
+  const expectedToken = context.env?.HEALTHCHECK_TOKEN?.trim();
+  const suppliedToken = context.req.header(HEALTHCHECK_TOKEN_HEADER)?.trim();
+
+  if (!expectedToken || suppliedToken !== expectedToken) {
+    return context.json({ error: "not_found" }, 404);
+  }
+
   return context.json({
     status: "ok",
-    redirectRoutes: listRedirects().length,
   });
 });
 

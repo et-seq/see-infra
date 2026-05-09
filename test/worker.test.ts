@@ -24,13 +24,42 @@ describe("worker entrypoint", () => {
     });
   });
 
-  it("reports health without redirecting", async () => {
+  it("hides health checks without the configured token", async () => {
+    const response = await app.request("https://see.etseq.co/__health", {}, {
+      HEALTHCHECK_TOKEN: "expected-token",
+    });
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: "not_found",
+    });
+  });
+
+  it("hides health checks when the token secret is not configured", async () => {
     const response = await app.request("https://see.etseq.co/__health");
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: "not_found",
+    });
+  });
+
+  it("reports health with the configured token", async () => {
+    const response = await app.request(
+      "https://see.etseq.co/__health",
+      {
+        headers: {
+          "x-health-token": "expected-token",
+        },
+      },
+      {
+        HEALTHCHECK_TOKEN: "expected-token",
+      },
+    );
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       status: "ok",
-      redirectRoutes: 2,
     });
   });
 });
