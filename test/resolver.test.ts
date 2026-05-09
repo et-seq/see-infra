@@ -76,6 +76,61 @@ describe("redirect resolver", () => {
     });
   });
 
+  it("rejects duplicate redirect ids", () => {
+    const duplicate = defineRedirectDestination({
+      id: "duplicate",
+      target: "https://example.test/one",
+      description: "Duplicate one",
+      routes: [
+        {
+          segments: ["one"],
+          kind: "shortcut",
+        },
+      ],
+    });
+
+    expect(() => createRedirectIndex([duplicate, duplicate])).toThrow(
+      'Duplicate redirect definition id "duplicate"',
+    );
+  });
+
+  it("rejects non-http redirect targets", () => {
+    expect(() =>
+      createRedirectIndex([
+        defineRedirectDestination({
+          id: "invalid-target",
+          target: "mailto:test@example.test",
+          description: "Invalid target fixture",
+          routes: [
+            {
+              segments: ["invalid-target"],
+              kind: "shortcut",
+            },
+          ],
+        }),
+      ]),
+    ).toThrow('Redirect target for "invalid-target" must use http or https');
+  });
+
+  it("rejects invalid redirect status values", () => {
+    expect(() =>
+      createRedirectIndex([
+        defineRedirectDestination({
+          id: "invalid-status",
+          target: "https://example.test/status",
+          description: "Invalid status fixture",
+          routes: [
+            {
+              segments: ["invalid-status"],
+              kind: "shortcut",
+              status: 300 as never,
+            },
+          ],
+        }),
+      ]),
+    ).toThrow('Redirect route in "invalid-status" has unsupported status "300"');
+  });
+
   it("leaves unimplemented jurisdiction paths unresolved", () => {
     expect(resolveRedirect("/aus/fca")).toBeUndefined();
   });

@@ -4,6 +4,10 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-05-09",
   "workers_dev": false,
+  "build": {
+    "command": "npm run generate:destinations",
+    "watch_dir": ["src", "scripts"]
+  },
   "routes": [
     {
       "pattern": "see.etseq.co/*",

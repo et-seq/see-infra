@@ -29,13 +29,23 @@ app.all("*", (context) => {
 
   const destination = new URL(redirect.target);
 
-  // Query strings are preserved by default so a future target can receive
-  // search parameters without adding route-specific worker code.
   if (redirect.preserveQuery) {
-    destination.search = requestUrl.search;
+    appendSearchParams(destination.searchParams, requestUrl.searchParams);
   }
 
   return context.redirect(destination.toString(), redirect.status);
 });
+
+// Preserve the destination's own query string and append request query
+// parameters. This avoids route-specific code for targets that later need
+// search parameters while keeping destination URLs authoritative.
+function appendSearchParams(
+  destinationParams: URLSearchParams,
+  requestParams: URLSearchParams,
+) {
+  requestParams.forEach((value, key) => {
+    destinationParams.append(key, value);
+  });
+}
 
 export default app;

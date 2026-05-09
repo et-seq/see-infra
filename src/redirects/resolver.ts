@@ -9,6 +9,7 @@ import type {
 } from "./types";
 
 const DEFAULT_REDIRECT_STATUS: RedirectStatus = 302;
+const REDIRECT_STATUSES = new Set<number>([301, 302, 307, 308]);
 const ROUTE_SEPARATOR = "/";
 
 interface IndexedRedirect {
@@ -91,17 +92,56 @@ function buildRouteIndex(
   definitions: readonly RedirectDefinition[],
 ): ReadonlyMap<string, IndexedRedirect> {
   const index = new Map<string, IndexedRedirect>();
+  const definitionIds = new Set<string>();
 
   for (const definition of definitions) {
-    const target = new URL(definition.target).toString();
+    const normalizedId = definition.id.trim();
+
+    if (!normalizedId) {
+      throw new Error("Redirect definitions must have a non-empty id");
+    }
+
+    if (definitionIds.has(normalizedId)) {
+      throw new Error(`Duplicate redirect definition id "${normalizedId}"`);
+    }
+
+    definitionIds.add(normalizedId);
+
+    const target = normalizeRedirectTarget(definition);
+
+    if (definition.routes.length === 0) {
+      throw new Error(`Redirect definition "${normalizedId}" has no routes`);
+    }
 
     for (const route of definition.routes) {
+      if (route.kind !== "shortcut" && route.kind !== "jurisdiction") {
+        throw new Error(
+          `Redirect route in "${normalizedId}" has unsupported kind "${String(route.kind)}"`,
+        );
+      }
+
+      const status =
+        route.status ?? definition.defaultStatus ?? DEFAULT_REDIRECT_STATUS;
+
+      if (!REDIRECT_STATUSES.has(status)) {
+        throw new Error(
+          `Redirect route in "${normalizedId}" has unsupported status "${String(status)}"`,
+        );
+      }
+
       const normalizedSegments = normalizeSegments(route.segments);
       const segments =
         route.kind === "jurisdiction"
           ? canonicalizeJurisdictionSegments(normalizedSegments)
           : normalizedSegments;
       const routeKey = routeKeyFromSegments(segments);
+
+      if (!routeKey) {
+        throw new Error(
+          `Redirect route in "${definition.id}" must contain at least one non-empty segment`,
+        );
+      }
+
       const existingRoute = index.get(routeKey);
 
       if (existingRoute) {
@@ -111,10 +151,9 @@ function buildRouteIndex(
       }
 
       index.set(routeKey, {
-        id: definition.id,
+        id: normalizedId,
         target,
-        status:
-          route.status ?? definition.defaultStatus ?? DEFAULT_REDIRECT_STATUS,
+        status,
         preserveQuery:
           route.preserveQuery ?? definition.preserveQuery ?? true,
         segments,
@@ -125,6 +164,26 @@ function buildRouteIndex(
   }
 
   return index;
+}
+
+function normalizeRedirectTarget(definition: RedirectDefinition): string {
+  let target: URL;
+
+  try {
+    target = new URL(definition.target);
+  } catch {
+    throw new Error(
+      `Redirect target for "${definition.id}" must be an absolute URL`,
+    );
+  }
+
+  if (target.protocol !== "https:" && target.protocol !== "http:") {
+    throw new Error(
+      `Redirect target for "${definition.id}" must use http or https`,
+    );
+  }
+
+  return target.toString();
 }
 
 function normalizeSegments(pathnameOrSegments: string | readonly string[]) {
