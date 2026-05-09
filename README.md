@@ -8,8 +8,15 @@ The Worker maps short legal-reference paths to external websites. Redirect match
 
 - `https://see.etseq.co/scotus` -> `https://www.supremecourt.gov/`
 - `https://see.etseq.co/us/scotus` -> `https://www.supremecourt.gov/`
+- `https://see.etseq.co/hca` -> `https://www.hcourt.gov.au/cases-and-judgments/judgments/judgments-1998-current`
+- `https://see.etseq.co/aus/hca` -> `https://www.hcourt.gov.au/cases-and-judgments/judgments/judgments-1998-current`
+- `https://see.etseq.co/us/usc` -> `https://uscode.house.gov/`
+- `https://see.etseq.co/us/u.s.c` -> `https://uscode.house.gov/`
+- `https://see.etseq.co/us/cfr` -> `https://www.ecfr.gov/current`
+- `https://see.etseq.co/us/c.f.r` -> `https://www.ecfr.gov/current`
+- `https://see.etseq.co/mulr` -> `https://mulr.com.au/`
 
-The Australia jurisdiction currently has no concrete redirect targets.
+Jurisdiction aliases are also available where declared. For example, `https://see.etseq.co/australia/hca` and `https://see.etseq.co/usa/usc` resolve through the same declared jurisdiction segments.
 
 ## Project Layout
 

@@ -29,6 +29,48 @@ describe("redirect resolver", () => {
     });
   });
 
+  it("resolves the High Court of Australia shortcut and jurisdiction alias", () => {
+    expect(resolveRedirect("/hca")).toMatchObject({
+      id: "hca",
+      target:
+        "https://www.hcourt.gov.au/cases-and-judgments/judgments/judgments-1998-current",
+    });
+    expect(resolveRedirect("/australia/hca")).toMatchObject({
+      id: "hca",
+      target:
+        "https://www.hcourt.gov.au/cases-and-judgments/judgments/judgments-1998-current",
+    });
+  });
+
+  it("resolves U.S. Code and CFR only under the U.S. jurisdiction", () => {
+    expect(resolveRedirect("/us/usc")).toMatchObject({
+      id: "usc",
+      target: "https://uscode.house.gov/",
+    });
+    expect(resolveRedirect("/usa/u.s.c")).toMatchObject({
+      id: "usc",
+      target: "https://uscode.house.gov/",
+    });
+    expect(resolveRedirect("/us/cfr")).toMatchObject({
+      id: "cfr",
+      target: "https://www.ecfr.gov/current",
+    });
+    expect(resolveRedirect("/united-states/c.f.r")).toMatchObject({
+      id: "cfr",
+      target: "https://www.ecfr.gov/current",
+    });
+    expect(resolveRedirect("/usc")).toBeUndefined();
+    expect(resolveRedirect("/cfr")).toBeUndefined();
+  });
+
+  it("resolves the Melbourne University Law Review shortcut only", () => {
+    expect(resolveRedirect("/mulr")).toMatchObject({
+      id: "mulr",
+      target: "https://mulr.com.au/",
+    });
+    expect(resolveRedirect("/aus/mulr")).toBeUndefined();
+  });
+
   it("normalizes case and trailing slashes", () => {
     expect(routeKeyFromPathname("/US/SCOTUS/")).toBe("us/scotus");
     expect(resolveRedirect("/ScOtUs")).toMatchObject({
@@ -172,7 +214,19 @@ describe("redirect resolver", () => {
   it("allows multiple routes to point to the same destination", () => {
     const paths = listRedirects().map((redirect) => redirect.path);
 
-    expect(paths).toEqual(expect.arrayContaining(["/scotus", "/us/scotus"]));
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        "/scotus",
+        "/us/scotus",
+        "/hca",
+        "/aus/hca",
+        "/us/usc",
+        "/us/u.s.c",
+        "/us/cfr",
+        "/us/c.f.r",
+        "/mulr",
+      ]),
+    );
     expect(new Set(paths).size).toBe(paths.length);
   });
 });
