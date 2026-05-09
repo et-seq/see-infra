@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "see-infra",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-09",
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "see.etseq.co/*",
+      "zone_name": "etseq.co"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
