@@ -18,7 +18,7 @@ The Australia jurisdiction currently has no concrete redirect targets.
 - `src/redirects/jurisdictions.ts`: canonical jurisdiction slugs and aliases.
 - `src/redirects/destinations/*.ts`: one file per redirect destination.
 - `scripts/generate-destination-manifest.mjs`: scans destination files and generates the import manifest.
-- `wrangler.jsonc`: Cloudflare Worker deployment and route configuration.
+- `wrangler.jsonc`: Cloudflare Worker deployment and custom domain configuration.
 
 ## Development
 
@@ -182,16 +182,17 @@ Important fields:
 - `name`: Worker name, currently `see-infra`.
 - `main`: Worker entrypoint, currently `src/index.ts`.
 - `compatibility_date`: runtime compatibility date.
-- `workers_dev`: set to `false` so deployment uses the configured route instead of a `workers.dev` URL.
+- `workers_dev`: set to `false` so deployment uses the configured custom domain instead of a `workers.dev` URL.
 - `build.command`: runs `npm run generate:destinations` before Wrangler bundles the Worker.
-- `routes`: publishes the Worker to `see.etseq.co/*` in the `etseq.co` zone.
+- `routes`: attaches the Worker to the custom domain `see.etseq.co`.
+- `custom_domain`: set to `true`, so Cloudflare treats the Worker as the origin for `see.etseq.co` and manages the required DNS/certificate plumbing.
 - `observability.enabled`: enables Cloudflare Workers observability.
 
 Deployment expects:
 
 - Cloudflare account access to the `etseq.co` zone.
 - A configured Wrangler login or `CLOUDFLARE_API_TOKEN`.
-- A Cloudflare DNS setup where requests for `see.etseq.co` reach Cloudflare.
+- No manual `see.etseq.co` DNS record with the same hostname. If a previous route-based setup created a proxied `A`, `AAAA`, or `CNAME` record for `see`, remove it before using the custom domain.
 
 Deploy:
 

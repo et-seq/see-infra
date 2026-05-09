@@ -10,8 +10,8 @@
   },
   "routes": [
     {
-      "pattern": "see.etseq.co/*",
-      "zone_name": "etseq.co"
+      "pattern": "see.etseq.co",
+      "custom_domain": true
     }
   ],
   "observability": {
