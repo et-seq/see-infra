@@ -6,8 +6,8 @@ The Worker maps short legal-reference paths to external websites. Redirect match
 
 ## Current Routes
 
-- `https://see.etseq.co/scotus` -> `https://www.supremecourt.gov/`
-- `https://see.etseq.co/us/scotus` -> `https://www.supremecourt.gov/`
+- `https://see.etseq.co/scotus` -> `https://www.supremecourt.gov/opinions/slipopinion/25`
+- `https://see.etseq.co/us/scotus` -> `https://www.supremecourt.gov/opinions/slipopinion/25`
 - `https://see.etseq.co/hca` -> `https://www.hcourt.gov.au/cases-and-judgments/judgments/judgments-1998-current`
 - `https://see.etseq.co/aus/hca` -> `https://www.hcourt.gov.au/cases-and-judgments/judgments/judgments-1998-current`
 - `https://see.etseq.co/us/usc` -> `https://uscode.house.gov/`
@@ -145,7 +145,7 @@ import { us } from "../jurisdictions";
 
 export default defineRedirectDestination({
   id: "scotus",
-  target: "https://www.supremecourt.gov/",
+  target: "https://www.supremecourt.gov/opinions/slipopinion/25",
   description: "Supreme Court of the United States",
   routes: [
     {

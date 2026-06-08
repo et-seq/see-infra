@@ -13,7 +13,7 @@ describe("redirect resolver", () => {
   it("resolves the SCOTUS shortcut", () => {
     expect(resolveRedirect("/scotus")).toMatchObject({
       id: "scotus",
-      target: "https://www.supremecourt.gov/",
+      target: "https://www.supremecourt.gov/opinions/slipopinion/25",
       status: 302,
     });
   });
@@ -21,11 +21,11 @@ describe("redirect resolver", () => {
   it("resolves the SCOTUS jurisdiction-specific alias", () => {
     expect(resolveRedirect("/us/scotus")).toMatchObject({
       id: "scotus",
-      target: "https://www.supremecourt.gov/",
+      target: "https://www.supremecourt.gov/opinions/slipopinion/25",
     });
     expect(resolveRedirect("/usa/scotus")).toMatchObject({
       id: "scotus",
-      target: "https://www.supremecourt.gov/",
+      target: "https://www.supremecourt.gov/opinions/slipopinion/25",
     });
   });
 
@@ -121,10 +121,10 @@ describe("redirect resolver", () => {
   it("normalizes case and trailing slashes", () => {
     expect(routeKeyFromPathname("/US/SCOTUS/")).toBe("us/scotus");
     expect(resolveRedirect("/ScOtUs")).toMatchObject({
-      target: "https://www.supremecourt.gov/",
+      target: "https://www.supremecourt.gov/opinions/slipopinion/25",
     });
     expect(resolveRedirect("/US/SCOTUS/")).toMatchObject({
-      target: "https://www.supremecourt.gov/",
+      target: "https://www.supremecourt.gov/opinions/slipopinion/25",
     });
   });
 

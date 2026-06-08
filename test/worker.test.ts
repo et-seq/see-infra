@@ -10,7 +10,7 @@ describe("worker entrypoint", () => {
 
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe(
-      "https://www.supremecourt.gov/?term=constitutional&term=statutory",
+      "https://www.supremecourt.gov/opinions/slipopinion/25?term=constitutional&term=statutory",
     );
   });
 
