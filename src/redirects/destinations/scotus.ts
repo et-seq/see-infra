@@ -1,7 +1,7 @@
 import { defineRedirectDestination } from "../types";
 import { us } from "../jurisdictions";
 
-const SCOTUS_URL = "https://www.supremecourt.gov/";
+const SCOTUS_URL = "https://www.supremecourt.gov/opinions/slipopinion/25";
 
 export default defineRedirectDestination({
   id: "scotus",
