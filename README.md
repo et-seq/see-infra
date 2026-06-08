@@ -15,8 +15,17 @@ The Worker maps short legal-reference paths to external websites. Redirect match
 - `https://see.etseq.co/us/cfr` -> `https://www.ecfr.gov/current`
 - `https://see.etseq.co/us/c.f.r` -> `https://www.ecfr.gov/current`
 - `https://see.etseq.co/mulr` -> `https://mulr.com.au/`
+- `https://see.etseq.co/canada/cipo` -> `https://ised-isde.canada.ca/site/canadian-intellectual-property-office/en`
+- `https://see.etseq.co/canada/tm/gs_manual` -> `https://ised-isde.canada.ca/site/canadian-intellectual-property-office/en/trademarks/goods-and-services-manual`
+- `https://see.etseq.co/canada/tm/search` -> `https://ised-isde.canada.ca/cipo/trademark-search/srch`
+- `https://see.etseq.co/uspto` -> `https://www.uspto.gov/`
+- `https://see.etseq.co/us/uspto` -> `https://www.uspto.gov/`
+- `https://see.etseq.co/ipaus` -> `https://www.ipaustralia.gov.au/`
+- `https://see.etseq.co/aus/ipa` -> `https://www.ipaustralia.gov.au/`
+- `https://see.etseq.co/aus/ipaus` -> `https://www.ipaustralia.gov.au/`
+- `https://see.etseq.co/aus/ipa_manual` -> `https://manuals.ipaustralia.gov.au/`
 
-Jurisdiction aliases are also available where declared. For example, `https://see.etseq.co/australia/hca` and `https://see.etseq.co/usa/usc` resolve through the same declared jurisdiction segments.
+Jurisdiction aliases are also available where declared. For example, `https://see.etseq.co/australia/hca`, `https://see.etseq.co/usa/usc`, and `https://see.etseq.co/can/cipo` resolve through the same declared jurisdiction segments.
 
 ## Project Layout
 

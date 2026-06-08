@@ -71,6 +71,53 @@ describe("redirect resolver", () => {
     expect(resolveRedirect("/aus/mulr")).toBeUndefined();
   });
 
+  it("resolves the Canadian intellectual property routes", () => {
+    expect(resolveRedirect("/canada/cipo")).toMatchObject({
+      id: "cipo",
+      target:
+        "https://ised-isde.canada.ca/site/canadian-intellectual-property-office/en",
+    });
+    expect(resolveRedirect("/can/tm/gs_manual")).toMatchObject({
+      id: "cipo-goods-services-manual",
+      target:
+        "https://ised-isde.canada.ca/site/canadian-intellectual-property-office/en/trademarks/goods-and-services-manual",
+    });
+    expect(resolveRedirect("/CANADA/TM/SEARCH")).toMatchObject({
+      id: "cipo-trademark-search",
+      target: "https://ised-isde.canada.ca/cipo/trademark-search/srch",
+    });
+  });
+
+  it("resolves USPTO as a shortcut and under the U.S. jurisdiction", () => {
+    expect(resolveRedirect("/uspto")).toMatchObject({
+      id: "uspto",
+      target: "https://www.uspto.gov/",
+    });
+    expect(resolveRedirect("/usa/uspto")).toMatchObject({
+      id: "uspto",
+      target: "https://www.uspto.gov/",
+    });
+  });
+
+  it("resolves IP Australia and its manuals through the requested routes", () => {
+    expect(resolveRedirect("/ipaus")).toMatchObject({
+      id: "ip-australia",
+      target: "https://www.ipaustralia.gov.au/",
+    });
+    expect(resolveRedirect("/aus/ipa")).toMatchObject({
+      id: "ip-australia",
+      target: "https://www.ipaustralia.gov.au/",
+    });
+    expect(resolveRedirect("/australia/ipaus")).toMatchObject({
+      id: "ip-australia",
+      target: "https://www.ipaustralia.gov.au/",
+    });
+    expect(resolveRedirect("/au/ipa_manual")).toMatchObject({
+      id: "ip-australia-manuals",
+      target: "https://manuals.ipaustralia.gov.au/",
+    });
+  });
+
   it("normalizes case and trailing slashes", () => {
     expect(routeKeyFromPathname("/US/SCOTUS/")).toBe("us/scotus");
     expect(resolveRedirect("/ScOtUs")).toMatchObject({
@@ -225,6 +272,15 @@ describe("redirect resolver", () => {
         "/us/cfr",
         "/us/c.f.r",
         "/mulr",
+        "/canada/cipo",
+        "/canada/tm/gs_manual",
+        "/canada/tm/search",
+        "/uspto",
+        "/us/uspto",
+        "/ipaus",
+        "/aus/ipa",
+        "/aus/ipaus",
+        "/aus/ipa_manual",
       ]),
     );
     expect(new Set(paths).size).toBe(paths.length);
