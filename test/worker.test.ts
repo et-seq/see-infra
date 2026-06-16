@@ -3,6 +3,24 @@ import { describe, expect, it } from "vitest";
 import app from "../src/index";
 
 describe("worker entrypoint", () => {
+  it("serves the interactive destination index at the root path", async () => {
+    const response = await app.request("https://see.etseq.co/");
+    const body = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/html");
+    expect(response.headers.get("cache-control")).toBe("public, max-age=300");
+    expect(body).toContain("Destination Index");
+    expect(body).toContain("/canada/cipo");
+    expect(body).toContain("routeData");
+    expect(body).toContain(
+      'name="viewport" content="width=device-width, initial-scale=1"',
+    );
+    expect(body).toContain("@media (max-width: 820px)");
+    expect(body).toContain("@media (max-width: 390px)");
+    expect(body).toContain("route-path");
+  });
+
   it("redirects matching paths and preserves request query parameters", async () => {
     const response = await app.request(
       "https://see.etseq.co/ScOtUs?term=constitutional&term=statutory",
@@ -14,8 +32,24 @@ describe("worker entrypoint", () => {
     );
   });
 
-  it("returns a structured 404 for unresolved paths", async () => {
+  it("serves the interactive 404 page for unresolved paths", async () => {
     const response = await app.request("https://see.etseq.co/aus/fca");
+    const body = await response.text();
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get("content-type")).toContain("text/html");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(body).toContain("Route Not Found");
+    expect(body).toContain('data-check-current-path="true"');
+    expect(body).toContain("/aus/ipa");
+  });
+
+  it("returns a structured JSON 404 when requested by API clients", async () => {
+    const response = await app.request("https://see.etseq.co/aus/fca", {
+      headers: {
+        Accept: "application/json",
+      },
+    });
 
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({

@@ -1,5 +1,11 @@
 import { Hono } from "hono";
 
+import {
+  BASE_PAGE_HTML,
+  BASE_PAGE_RESPONSE_HEADERS,
+  NOT_FOUND_PAGE_HTML,
+  NOT_FOUND_PAGE_RESPONSE_HEADERS,
+} from "./base-page";
 import { resolveRedirect } from "./redirects";
 
 interface WorkerEnv {
@@ -9,6 +15,12 @@ interface WorkerEnv {
 const HEALTHCHECK_TOKEN_HEADER = "x-health-token";
 
 const app = new Hono<{ Bindings: WorkerEnv }>();
+
+app.get("/", () => {
+  return new Response(BASE_PAGE_HTML, {
+    headers: BASE_PAGE_RESPONSE_HEADERS,
+  });
+});
 
 app.get("/__health", (context) => {
   const expectedToken = context.env?.HEALTHCHECK_TOKEN?.trim();
@@ -28,6 +40,13 @@ app.all("*", (context) => {
   const redirect = resolveRedirect(requestTarget.pathname);
 
   if (!redirect) {
+    if (!acceptsJsonOnly(context.req.header("Accept"))) {
+      return new Response(NOT_FOUND_PAGE_HTML, {
+        status: 404,
+        headers: NOT_FOUND_PAGE_RESPONSE_HEADERS,
+      });
+    }
+
     return context.json(
       {
         error: "redirect_not_found",
@@ -44,6 +63,12 @@ app.all("*", (context) => {
     },
   });
 });
+
+function acceptsJsonOnly(acceptHeader: string | undefined) {
+  const accept = acceptHeader?.toLowerCase() ?? "";
+
+  return accept.includes("application/json") && !accept.includes("text/html");
+}
 
 function parseRequestTarget(url: string) {
   const authorityStart = url.indexOf("://");

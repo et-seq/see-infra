@@ -4,6 +4,8 @@ Cloudflare Worker redirector for `see.etseq.co/*`.
 
 The Worker maps short legal-reference paths to external websites. Redirect matching is case-insensitive, and jurisdiction paths can use aliases for top-level and nested jurisdictions.
 
+The root page at `https://see.etseq.co/` serves a static destination index generated from the same redirect registry. It includes filtering, route-type controls, and a route checker for the canonical paths currently listed by the Worker. Unresolved redirect paths return a matching `404` page for browser requests, while API clients that send `Accept: application/json` receive the structured JSON error.
+
 ## Current Routes
 
 - `https://see.etseq.co/scotus` -> `https://www.supremecourt.gov/opinions/slipopinion/25`
@@ -30,6 +32,7 @@ Jurisdiction aliases are also available where declared. For example, `https://se
 ## Project Layout
 
 - `src/index.ts`: Worker entrypoint and HTTP redirect handling.
+- `src/base-page.ts`: generated root-page destination index and client-side interactions.
 - `src/redirects/resolver.ts`: route indexing, path normalization, duplicate-route checks, and redirect lookup.
 - `src/redirects/jurisdictions/*.ts`: declared jurisdiction segments and aliases.
 - `src/redirects/destinations/*.ts`: one file per redirect destination.
@@ -176,7 +179,7 @@ Supported redirect status values are `301`, `302`, `307`, and `308`. The default
 
 ## Jurisdictions And Aliases
 
-Jurisdiction segments are explicit. Each top-level jurisdiction can have its own file under `src/redirects/jurisdictions/`; current files are `us.ts` and `aus.ts`.
+Jurisdiction segments are explicit. Each top-level jurisdiction can have its own file under `src/redirects/jurisdictions/`; current files are `us.ts`, `aus.ts`, and `canada.ts`.
 
 Example jurisdiction file:
 
@@ -223,6 +226,7 @@ The redirect runtime is intentionally small:
 - each request extracts only the path and query string from the request URL
 - each redirect request performs one normalized map lookup
 - redirect responses are constructed directly with `Response` and a `Location` header
+- the root interface is rendered once at module initialization and served as static HTML
 
 This keeps Cloudflare CPU work low while preserving the single-file destination authoring model.
 
