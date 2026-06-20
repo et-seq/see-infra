@@ -15,6 +15,7 @@ interface RouteView {
   readonly kind: RouteKind;
   readonly kindLabel: string;
   readonly segments: readonly string[];
+  readonly identifierSegments: readonly string[];
   readonly segmentLabels: Readonly<Record<string, string>>;
   readonly baseSegment: string;
   readonly baseLabel: string;
@@ -132,10 +133,8 @@ function buildDestinationIdentifiers(
   const identifiers = new Set<string>([id]);
 
   for (const route of routes) {
-    const routeIdentifier = route.segments.at(-1);
-
-    if (routeIdentifier) {
-      identifiers.add(routeIdentifier);
+    for (const identifier of route.identifierSegments) {
+      identifiers.add(identifier);
     }
   }
 
@@ -159,6 +158,7 @@ function buildRouteView(redirect: ListedRedirect): RouteView {
     kind: redirect.kind,
     kindLabel: toTitleCase(redirect.kind),
     segments,
+    identifierSegments: redirect.identifierSegments,
     segmentLabels: redirect.segmentLabels,
     baseSegment,
     baseLabel:

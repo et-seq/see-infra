@@ -24,6 +24,7 @@ interface IndexedRedirect {
   readonly segments: readonly string[];
   readonly description: string;
   readonly kind: RouteDefinition["kind"];
+  readonly identifierSegments: readonly string[];
   readonly segmentLabels: Readonly<Record<string, string>>;
 }
 
@@ -132,6 +133,7 @@ function buildRouteIndex(
         ...definitionSegmentLabels,
       };
       const canonicalRouteKey = routeKeyFromSegments(canonicalSegments);
+      const identifierSegments = getLastSegmentAlternatives(indexedSegmentSets);
 
       if (!canonicalRouteKey) {
         throw new Error(
@@ -151,6 +153,7 @@ function buildRouteIndex(
         segments: canonicalSegments,
         description: definition.description,
         kind: route.kind,
+        identifierSegments,
         segmentLabels,
       };
 
@@ -174,6 +177,7 @@ function buildRouteIndex(
         status: indexedRedirect.status,
         kind: indexedRedirect.kind,
         description: indexedRedirect.description,
+        identifierSegments: indexedRedirect.identifierSegments,
         segmentLabels: indexedRedirect.segmentLabels,
       });
     }
@@ -331,6 +335,20 @@ function normalizeSegmentAlternatives(segment: ShortcutRouteSegment) {
   }
 
   return alternatives;
+}
+
+function getLastSegmentAlternatives(segmentSets: readonly string[][]) {
+  const identifiers = new Set<string>();
+
+  for (const segmentSet of segmentSets) {
+    const lastSegment = segmentSet.at(-1);
+
+    if (lastSegment) {
+      identifiers.add(lastSegment);
+    }
+  }
+
+  return [...identifiers];
 }
 
 function normalizeSegment(segment: string) {

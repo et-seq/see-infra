@@ -156,6 +156,32 @@ describe("redirect resolver", () => {
     ]);
   });
 
+  it("lists route-local shortcut aliases as destination identifiers", () => {
+    const redirectIndex = createRedirectIndex([
+      defineRedirectDestination({
+        id: "shortcut-alias-test",
+        target: "https://example.test/shortcut-alias",
+        description: "Shortcut alias test fixture",
+        routes: [
+          {
+            segments: [["court", "ct"]],
+            kind: "shortcut",
+          },
+        ],
+      }),
+    ]);
+
+    expect(redirectIndex.resolve("/ct")).toMatchObject({
+      target: "https://example.test/shortcut-alias",
+    });
+    expect(redirectIndex.list()).toEqual([
+      expect.objectContaining({
+        path: "/court",
+        identifierSegments: ["court", "ct"],
+      }),
+    ]);
+  });
+
   it("precomputes target URL parts for low-overhead response construction", () => {
     const redirectIndex = createRedirectIndex([
       defineRedirectDestination({

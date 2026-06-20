@@ -68,6 +68,7 @@ export interface ListedRedirect {
   readonly status: RedirectStatus;
   readonly kind: RouteKind;
   readonly description: string;
+  readonly identifierSegments: readonly string[];
   readonly segmentLabels: Readonly<Record<string, string>>;
 }
 

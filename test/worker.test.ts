@@ -13,6 +13,7 @@ describe("worker entrypoint", () => {
     expect(body).toContain("See Infra - A Legal URL Router");
     expect(body).toContain("/canada/cipo");
     expect(body).toContain("routeData");
+    expect(body).toContain("identifierSegments");
     expect(body).toContain("segmentLabels");
     expect(body).toContain('"cipo":"CIPO"');
     expect(body).toContain('"us":"United States"');

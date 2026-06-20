@@ -181,7 +181,7 @@ Route fields:
 
 Supported redirect status values are `301`, `302`, `303`, `307`, and `308`. The default is `303`.
 
-The root route index derives its displayed destination cards and filters from the same redirect registry. Route-specific display labels are read from destination `segmentLabels` and jurisdiction segment labels. When no explicit label is supplied, the page falls back to generic title casing for the segment. The route checker uses the embedded route data in the page, so checks do not make additional Worker requests.
+The root route index derives its displayed destination cards and filters from the same redirect registry. Route-specific display labels are read from destination `segmentLabels` and jurisdiction segment labels. When no explicit label is supplied, the page falls back to generic title casing for the segment. Destination identifiers are also derived from normalized route metadata, so shortcut alias arrays appear in the displayed identifier list. The route checker uses the embedded route data in the page, so checks do not make additional Worker requests.
 
 Do not add destination-specific or jurisdiction-specific label maps to webpage code. Routing display vocabulary should live in `src/redirects/destinations/` or `src/redirects/jurisdictions/` with the route metadata it describes.
 
