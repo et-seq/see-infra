@@ -16,6 +16,8 @@ describe("worker entrypoint", () => {
     expect(body).toContain("Base Jurisdiction");
     expect(body).toContain("Route Level Filters");
     expect(body).toContain("level-filter-in");
+    expect(body).toContain("hasSelectedJurisdictionBase");
+    expect(body).toContain("levelFilters.replaceChildren();");
     expect(body).toContain("All Jurisdictions");
     expect(body).toContain("Target URL");
     expect(body).toContain("Available Routes");

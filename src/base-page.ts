@@ -879,9 +879,21 @@ function renderRouteExplorerPage(
       }
 
       function renderLevelFilters() {
+        if (!hasSelectedJurisdictionBase()) {
+          state.levels = [];
+          levelFilters.replaceChildren();
+          return;
+        }
+
         const scopedRoutes = allRoutes
           .map((entry) => entry.route)
-          .filter((route) => matchesBase(route) && matchesKind(route));
+          .filter((route) => {
+            return (
+              route.kind === "jurisdiction" &&
+              matchesBase(route) &&
+              matchesKind(route)
+            );
+          });
         const maxDepth = Math.max(
           0,
           ...scopedRoutes.map((route) => levelSegments(route).length),
@@ -964,33 +976,21 @@ function renderRouteExplorerPage(
       }
 
       function levelLabel(index) {
-        if (state.base === "__shortcut") {
-          return index === 0 ? "Shortcut" : "Shortcut Level " + String(index + 1);
-        }
-
-        if (state.base === "all") {
-          return "Route Level " + String(index + 1);
-        }
-
         return index === 0
           ? "First Subpath"
           : "Subpath Level " + String(index + 1);
       }
 
       function levelSegments(route) {
-        if (state.base === "all") {
-          return route.segments;
-        }
-
-        if (route.kind === "jurisdiction") {
-          return route.segments.slice(1);
-        }
-
-        return route.segments;
+        return route.segments.slice(1);
       }
 
       function matchesBase(route) {
         return state.base === "all" || route.baseSegment === state.base;
+      }
+
+      function hasSelectedJurisdictionBase() {
+        return state.base !== "all" && state.base !== "__shortcut";
       }
 
       function matchesKind(route) {

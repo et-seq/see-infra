@@ -4,7 +4,7 @@ Cloudflare Worker redirector for `see.etseq.co/*`.
 
 The Worker maps short legal-reference paths to external websites. Redirect matching is case-insensitive, and jurisdiction paths can use aliases for top-level and nested jurisdictions.
 
-The root page at `https://see.etseq.co/` serves a static destination index generated from the same redirect registry. It includes search, base-jurisdiction selection, level-by-level route filters, route-type controls, and a route checker for the canonical paths currently listed by the Worker. Unresolved redirect paths return a matching `404` page for browser requests, while API clients that send `Accept: application/json` receive the structured JSON error.
+The root page at `https://see.etseq.co/` serves a static destination index generated from the same redirect registry. It includes search, base-jurisdiction selection, jurisdiction-scoped level filters, route-type controls, and a route checker for the canonical paths currently listed by the Worker. Unresolved redirect paths return a matching `404` page for browser requests, while API clients that send `Accept: application/json` receive the structured JSON error.
 
 ## Current Routes
 
