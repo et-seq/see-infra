@@ -175,7 +175,7 @@ Route fields:
 - `status`: optional route-specific redirect status.
 - `preserveQuery`: optional boolean. Defaults to `true`.
 
-Supported redirect status values are `301`, `302`, `307`, and `308`. The default is `302`.
+Supported redirect status values are `301`, `302`, `303`, `307`, and `308`. The default is `303`.
 
 The root route index derives its displayed destination cards and filters from the same redirect registry. Route labels are title-cased automatically, but technical slugs that should display as legal names or acronyms can be added to `SEGMENT_LABELS` in `src/base-page.ts`.
 

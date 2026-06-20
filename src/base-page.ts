@@ -1094,15 +1094,17 @@ function renderRouteExplorerPage(
       function describeRedirectStatus(status) {
         switch (Number(status)) {
           case 301:
-            return "301: Permanent Redirect. Redirection Active.";
+            return "301: Redirection ON";
           case 302:
-            return "302: Temporary Redirect. Redirection Active.";
+            return "302: Redirection ON";
+          case 303:
+            return "303: See Other";
           case 307:
-            return "307: Temporary Redirect. Redirection Active; Request Method Preserved.";
+            return "307: Redirection ON";
           case 308:
-            return "308: Permanent Redirect. Redirection Active; Request Method Preserved.";
+            return "308: Redirection ON";
           default:
-            return String(status) + ": Redirect Status Configured.";
+            return String(status) + ": Status Set";
         }
       }
 
@@ -1230,15 +1232,17 @@ function describeRedirectStatuses(statuses: readonly number[]) {
 function describeRedirectStatus(status: number) {
   switch (status) {
     case 301:
-      return "301: Permanent Redirect. Redirection Active.";
+      return "301: Redirection ON";
     case 302:
-      return "302: Temporary Redirect. Redirection Active.";
+      return "302: Redirection ON";
+    case 303:
+      return "303: See Other";
     case 307:
-      return "307: Temporary Redirect. Redirection Active; Request Method Preserved.";
+      return "307: Redirection ON";
     case 308:
-      return "308: Permanent Redirect. Redirection Active; Request Method Preserved.";
+      return "308: Redirection ON";
     default:
-      return `${String(status)}: Redirect Status Configured.`;
+      return `${String(status)}: Status Set`;
   }
 }
 

@@ -22,7 +22,7 @@ describe("worker entrypoint", () => {
     expect(body).toContain("Target URL");
     expect(body).toContain("Available Routes");
     expect(body).toContain("Redirect Status");
-    expect(body).toContain("302: Temporary Redirect. Redirection Active.");
+    expect(body).toContain("303: See Other");
     expect(body).toContain(
       'name="viewport" content="width=device-width, initial-scale=1"',
     );
@@ -41,7 +41,7 @@ describe("worker entrypoint", () => {
       "https://see.etseq.co/ScOtUs?term=constitutional&term=statutory",
     );
 
-    expect(response.status).toBe(302);
+    expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
       "https://www.supremecourt.gov/opinions/slipopinion/25?term=constitutional&term=statutory",
     );

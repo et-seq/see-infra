@@ -1,4 +1,4 @@
-export type RedirectStatus = 301 | 302 | 307 | 308;
+export type RedirectStatus = 301 | 302 | 303 | 307 | 308;
 export type RouteKind = "shortcut" | "jurisdiction";
 export type ShortcutRouteSegment = string | readonly [string, ...string[]];
 export type ShortcutPathSegments = readonly [

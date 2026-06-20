@@ -14,7 +14,7 @@ describe("redirect resolver", () => {
     expect(resolveRedirect("/scotus")).toMatchObject({
       id: "scotus",
       target: "https://www.supremecourt.gov/opinions/slipopinion/25",
-      status: 302,
+      status: 303,
     });
   });
 

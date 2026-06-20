@@ -9,8 +9,8 @@ import type {
   ShortcutRouteSegment,
 } from "./types";
 
-const DEFAULT_REDIRECT_STATUS: RedirectStatus = 302;
-const REDIRECT_STATUSES = new Set<number>([301, 302, 307, 308]);
+const DEFAULT_REDIRECT_STATUS: RedirectStatus = 303;
+const REDIRECT_STATUSES = new Set<number>([301, 302, 303, 307, 308]);
 const ROUTE_SEPARATOR = "/";
 
 interface IndexedRedirect {
