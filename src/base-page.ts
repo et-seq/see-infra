@@ -105,19 +105,19 @@ const routeCount = destinations.reduce(
 // Build the documents once at module startup; request-time redirect handling
 // remains the lightweight normalized map lookup in the resolver.
 export const BASE_PAGE_HTML = renderRouteExplorerPage(destinations, {
-  documentTitle: "[see.etseq.co] Current Routing",
+  documentTitle: "See Infra - A Legal URL Router",
   eyebrow: "Routing Directory",
-  heading: "[see.etseq.co] Current Routing",
-  lede: "Current legal-reference redirects and path options served by this Worker.",
+  heading: "See Infra - A Legal URL Router",
+  lede: "See infra for currently available URL redirections and path options.",
   initialResult: "Awaiting Route",
   checkCurrentPath: false,
 });
 
 export const NOT_FOUND_PAGE_HTML = renderRouteExplorerPage(destinations, {
-  documentTitle: "Route Not Found - See.Etseq.Co",
+  documentTitle: "Route Not Found - See Infra @ etseq.co",
   eyebrow: "404",
   heading: "Route Not Found",
-  lede: "No redirect is configured for the requested path. Current canonical destinations remain available below.",
+  lede: "No redirect is available for the specified destination. See infra for currently available configurations.",
   initialResult: "No Listed Canonical Route Matched",
   checkCurrentPath: true,
 });
