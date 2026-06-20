@@ -421,9 +421,50 @@ function renderRouteExplorerPage(
       align-items: center;
     }
 
+    .route-input-shell {
+      position: relative;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .route-sample {
+      position: absolute;
+      inset: 1px 14px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      max-width: calc(100% - 28px);
+      color: #d1b76a;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.86rem;
+      line-height: 1;
+      overflow: hidden;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .route-sample[hidden] {
+      display: none;
+    }
+
+    .route-sample-text {
+      display: block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .route-sample-text[data-animate="true"] {
+      animation: sample-push-up 220ms ease-out;
+    }
+
     .action {
       flex: 0 0 auto;
       padding: 0 16px;
+    }
+
+    input[aria-invalid="true"] {
+      border-color: rgba(255, 255, 255, 0.62);
     }
 
     .result {
@@ -571,8 +612,34 @@ function renderRouteExplorerPage(
     }
 
     .status-description {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
       color: var(--text);
       line-height: 1.45;
+    }
+
+    .status-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .status-pill {
+      padding: 2px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.42);
+      border-radius: 999px;
+      color: #050505;
+      background: #f4f4f5;
+      font-size: 0.68rem;
+      font-weight: 720;
+      line-height: 1.3;
+    }
+
+    .status-code {
+      color: var(--text);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.76rem;
     }
 
     .route-button {
@@ -596,6 +663,18 @@ function renderRouteExplorerPage(
       from {
         opacity: 0;
         transform: translateY(-4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes sample-push-up {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
       }
 
       to {
@@ -716,7 +795,10 @@ function renderRouteExplorerPage(
         <label class="field">
           <span class="field-label">Route Check</span>
           <span class="input-row">
-            <input id="routeInput" type="text" autocomplete="off" placeholder="/us/scotus">
+            <span class="route-input-shell">
+              <input id="routeInput" type="text" autocomplete="off" aria-describedby="routeSample checkResult" aria-invalid="false">
+              <span id="routeSample" class="route-sample" aria-hidden="true"></span>
+            </span>
             <button id="checkButton" class="action" type="button">Check</button>
           </span>
         </label>
@@ -753,18 +835,23 @@ function renderRouteExplorerPage(
       const resultCount = document.getElementById("resultCount");
       const routeCount = document.getElementById("routeCount");
       const routeInput = document.getElementById("routeInput");
+      const routeSample = document.getElementById("routeSample");
       const checkButton = document.getElementById("checkButton");
       const checkResult = document.getElementById("checkResult");
       const kindButtons = Array.from(document.querySelectorAll("[data-filter-kind]"));
+      const routeSamples = buildRouteSamples(allRoutes.map((entry) => entry.route));
       const state = {
         base: "all",
         kind: "all",
         levels: [],
         query: "",
       };
+      let routeSampleIndex = 0;
 
       populateBaseSelect();
+      renderRouteSample(false);
       render();
+      setInterval(rotateRouteSample, 2400);
 
       filterInput.addEventListener("input", () => {
         state.query = filterInput.value.trim().toLowerCase();
@@ -782,6 +869,10 @@ function renderRouteExplorerPage(
         if (event.key === "Enter") {
           checkRoute();
         }
+      });
+      routeInput.addEventListener("input", () => {
+        routeInput.setAttribute("aria-invalid", "false");
+        updateRouteSampleVisibility();
       });
 
       kindButtons.forEach((button) => {
@@ -1021,29 +1112,124 @@ function renderRouteExplorerPage(
       }
 
       function checkRoute() {
-        const routeKey = normalizePath(routeInput.value);
+        const enteredRoute = routeInput.value.trim();
+        updateRouteSampleVisibility();
+
+        if (!enteredRoute) {
+          routeInput.setAttribute("aria-invalid", "true");
+          checkResult.textContent = "Please Enter Route";
+          updateRouteSampleVisibility();
+          return;
+        }
+
+        routeInput.setAttribute("aria-invalid", "false");
+        const routeKey = normalizePath(enteredRoute);
         const match = routeMap.get(routeKey);
 
-        if (!routeKey) {
-          checkResult.textContent = "Enter A Route Path";
+        if (match) {
+          checkResult.replaceChildren(
+            node("strong", match.route.path),
+            document.createTextNode(" -> "),
+            link(match.destination.title, match.destination.target),
+          );
           return;
         }
 
-        if (!match) {
-          checkResult.textContent = "No Listed Canonical Route Matched";
+        const partialMatches = findPartialRouteMatches(routeKey);
+
+        if (partialMatches.length > 0) {
+          checkResult.replaceChildren(
+            document.createTextNode("Partial Route. Complete It With: "),
+            ...partialMatches.flatMap((entry, index) => {
+              const separator = index === 0 ? [] : [document.createTextNode(" ")];
+
+              return [
+                ...separator,
+                localRouteLink(entry.route.path),
+              ];
+            }),
+          );
           return;
         }
 
-        checkResult.replaceChildren(
-          node("strong", match.route.path),
-          document.createTextNode(" -> "),
-          link(match.destination.title, match.destination.target),
-        );
+        checkResult.textContent = "No Listed Canonical Route Matched";
+      }
+
+      function findPartialRouteMatches(routeKey) {
+        const prefix = routeKey.endsWith("/") ? routeKey : routeKey + "/";
+
+        return allRoutes
+          .filter((entry) => normalizePath(entry.route.path).startsWith(prefix))
+          .slice(0, 4);
+      }
+
+      function rotateRouteSample() {
+        if (routeSamples.length === 0 || document.hidden) {
+          return;
+        }
+
+        routeSampleIndex = (routeSampleIndex + 1) % routeSamples.length;
+        renderRouteSample(true);
+      }
+
+      function renderRouteSample(animate) {
+        if (routeSamples.length === 0) {
+          routeSample.hidden = true;
+          return;
+        }
+
+        const sample = node("span", "Try " + routeSamples[routeSampleIndex]);
+        sample.className = "route-sample-text";
+        sample.dataset.animate = String(animate);
+        routeSample.replaceChildren(sample);
+        updateRouteSampleVisibility();
+      }
+
+      function updateRouteSampleVisibility() {
+        routeSample.hidden = Boolean(routeInput.value.trim());
+      }
+
+      function buildRouteSamples(routes) {
+        const samples = [];
+        const seen = new Set();
+
+        for (const route of routes) {
+          addRouteSample(samples, seen, route.path);
+
+          if (route.kind === "shortcut") {
+            addRouteSample(samples, seen, route.path.slice(1));
+          }
+
+          if (route.segments.length > 1) {
+            addRouteSample(samples, seen, "/" + route.segments.slice(0, -1).join("/"));
+          }
+        }
+
+        return samples;
+      }
+
+      function addRouteSample(samples, seen, value) {
+        const sample = value.trim();
+
+        if (!sample || seen.has(sample)) {
+          return;
+        }
+
+        seen.add(sample);
+        samples.push(sample);
+      }
+
+      function localRouteLink(path) {
+        const anchor = document.createElement("a");
+        anchor.href = path;
+        anchor.className = "route";
+        anchor.textContent = path;
+        return anchor;
       }
 
       function renderDestination(destination) {
         const routes = destination.routes.map(renderRoute).join("");
-        const statusSummary = describeRedirectStatuses(
+        const statusSummary = renderRedirectStatuses(
           destination.routes.map((route) => route.status),
         );
 
@@ -1064,14 +1250,14 @@ function renderRouteExplorerPage(
               '</a>' +
             '</div>' +
             '<div>' +
-              '<span class="field-label">Available Routes</span>' +
+              '<span class="field-label">Add After see.etseq.co</span>' +
               '<div class="routes">' + routes + '</div>' +
             '</div>' +
           '</div>' +
           '<footer class="destination-footer">' +
             '<span class="status-block">' +
               '<span class="meta-label">Redirect Status</span>' +
-              '<span class="status-description">' + escapeHtml(statusSummary) + '</span>' +
+              '<span class="status-description">' + statusSummary + '</span>' +
             '</span>' +
             '<button class="route-button" type="button" data-copy-route="' + escapeAttribute(destination.routes[0].path) + '">Copy Route</button>' +
           '</footer>' +
@@ -1085,27 +1271,17 @@ function renderRouteExplorerPage(
         '</a>';
       }
 
-      function describeRedirectStatuses(statuses) {
+      function renderRedirectStatuses(statuses) {
         return Array.from(new Set(statuses))
-          .map(describeRedirectStatus)
-          .join(" | ");
+          .map(renderRedirectStatus)
+          .join("");
       }
 
-      function describeRedirectStatus(status) {
-        switch (Number(status)) {
-          case 301:
-            return "301: Redirection ON";
-          case 302:
-            return "302: Redirection ON";
-          case 303:
-            return "303: See Other";
-          case 307:
-            return "307: Redirection ON";
-          case 308:
-            return "308: Redirection ON";
-          default:
-            return String(status) + ": Status Set";
-        }
+      function renderRedirectStatus(status) {
+        return '<span class="status-item">' +
+          '<span class="status-pill">Active</span>' +
+          '<span class="status-code">HTTP ' + escapeHtml(String(status)) + '</span>' +
+        '</span>';
       }
 
       function normalizePath(value) {
@@ -1207,14 +1383,14 @@ function renderDestinationCard(destination: DestinationView) {
             <a class="target" href="${escapeAttribute(destination.target)}" target="_blank" rel="noreferrer noopener">${escapeHtml(destination.target)}</a>
           </div>
           <div>
-            <span class="field-label">Available Routes</span>
+            <span class="field-label">Add After see.etseq.co</span>
             <div class="routes">${routes}</div>
           </div>
         </div>
         <footer class="destination-footer">
           <span class="status-block">
             <span class="meta-label">Redirect Status</span>
-            <span class="status-description">${escapeHtml(statusSummary)}</span>
+            <span class="status-description">${statusSummary}</span>
           </span>
           <button class="route-button" type="button" data-copy-route="${escapeAttribute(destination.routes[0]?.path ?? "/")}">Copy Route</button>
         </footer>
@@ -1226,24 +1402,11 @@ function renderRouteLink(route: RouteView) {
 }
 
 function describeRedirectStatuses(statuses: readonly number[]) {
-  return [...new Set(statuses)].map(describeRedirectStatus).join(" | ");
+  return [...new Set(statuses)].map(renderRedirectStatus).join("");
 }
 
-function describeRedirectStatus(status: number) {
-  switch (status) {
-    case 301:
-      return "301: Redirection ON";
-    case 302:
-      return "302: Redirection ON";
-    case 303:
-      return "303: See Other";
-    case 307:
-      return "307: Redirection ON";
-    case 308:
-      return "308: Redirection ON";
-    default:
-      return `${String(status)}: Status Set`;
-  }
+function renderRedirectStatus(status: number) {
+  return `<span class="status-item"><span class="status-pill">Active</span><span class="status-code">HTTP ${escapeHtml(String(status))}</span></span>`;
 }
 
 function formatSegmentLabel(segment: string) {

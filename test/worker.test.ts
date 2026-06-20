@@ -20,9 +20,15 @@ describe("worker entrypoint", () => {
     expect(body).toContain("levelFilters.replaceChildren();");
     expect(body).toContain("All Jurisdictions");
     expect(body).toContain("Target URL");
-    expect(body).toContain("Available Routes");
+    expect(body).toContain("Add After see.etseq.co");
     expect(body).toContain("Redirect Status");
-    expect(body).toContain("303: See Other");
+    expect(body).toContain('id="routeSample"');
+    expect(body).toContain("sample-push-up");
+    expect(body).toContain("Please Enter Route");
+    expect(body).toContain("Partial Route. Complete It With:");
+    expect(body).toContain("buildRouteSamples");
+    expect(body).toContain('status-pill">Active');
+    expect(body).toContain('status-code">HTTP 303');
     expect(body).toContain(
       'name="viewport" content="width=device-width, initial-scale=1"',
     );
