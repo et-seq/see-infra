@@ -27,6 +27,10 @@ describe("worker entrypoint", () => {
     expect(body).toContain("Please Enter Route");
     expect(body).toContain("Partial Route. Complete It With:");
     expect(body).toContain("buildRouteSamples");
+    expect(body).toContain("routeSampleIntervalMs = 4200");
+    expect(body).toContain("--sample:");
+    expect(body).toContain("--active:");
+    expect(body).toContain("--code:");
     expect(body).toContain('status-pill">Active');
     expect(body).toContain('status-code">HTTP 303');
     expect(body).toContain(

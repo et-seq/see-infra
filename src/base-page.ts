@@ -199,17 +199,25 @@ function renderRouteExplorerPage(
   <style>
     :root {
       color-scheme: dark;
-      --background: #050505;
-      --surface: rgba(18, 18, 20, 0.78);
-      --surface-raised: rgba(25, 25, 28, 0.84);
+      --background: #050607;
+      --surface: rgba(18, 19, 21, 0.8);
+      --surface-raised: rgba(25, 26, 29, 0.86);
       --surface-subtle: rgba(255, 255, 255, 0.055);
-      --border: rgba(255, 255, 255, 0.13);
-      --border-strong: rgba(255, 255, 255, 0.26);
-      --text: #f4f4f5;
-      --muted: #a8a8ad;
-      --dim: #77777e;
-      --accent: #9ec7d3;
-      --accent-soft: rgba(158, 199, 211, 0.16);
+      --border: rgba(231, 236, 244, 0.13);
+      --border-strong: rgba(231, 236, 244, 0.28);
+      --text: #f3f5f7;
+      --muted: #a8afb8;
+      --dim: #757c86;
+      --accent: #b8c7d9;
+      --accent-strong: #d9e3ee;
+      --accent-soft: rgba(184, 199, 217, 0.15);
+      --sample: #d6b66f;
+      --sample-soft: rgba(214, 182, 111, 0.16);
+      --active: #8bc7a8;
+      --active-soft: rgba(139, 199, 168, 0.16);
+      --code: #beb7d2;
+      --code-soft: rgba(190, 183, 210, 0.14);
+      --warning: #d6a37f;
       --shadow: rgba(0, 0, 0, 0.45);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
@@ -223,11 +231,12 @@ function renderRouteExplorerPage(
       margin: 0;
       color: var(--text);
       background:
-        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 340px),
+        linear-gradient(rgba(231, 236, 244, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(231, 236, 244, 0.03) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(184, 199, 217, 0.07), transparent 42%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 360px),
         var(--background);
-      background-size: 40px 40px, 40px 40px, auto, auto;
+      background-size: 40px 40px, 40px 40px, auto, auto, auto;
       line-height: 1.5;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
@@ -272,10 +281,10 @@ function renderRouteExplorerPage(
       grid-template-columns: minmax(0, 1fr) minmax(210px, auto);
       gap: 24px;
       align-items: end;
-      padding: 30px 32px;
+      padding: 36px 38px;
       border-radius: 8px;
       background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015)),
+        linear-gradient(135deg, rgba(184, 199, 217, 0.095), rgba(139, 199, 168, 0.028) 52%, rgba(214, 182, 111, 0.035)),
         var(--surface);
     }
 
@@ -288,13 +297,15 @@ function renderRouteExplorerPage(
     }
 
     .eyebrow {
-      margin: 0 0 10px;
-      color: var(--accent);
+      margin: 0 0 12px;
+      color: var(--accent-strong);
+      font-size: 0.9rem;
+      font-weight: 700;
     }
 
     h1 {
       margin: 0;
-      font-size: 3.45rem;
+      font-size: 3.55rem;
       line-height: 1.02;
       font-weight: 700;
       letter-spacing: 0;
@@ -328,6 +339,7 @@ function renderRouteExplorerPage(
       display: block;
       font-size: 1.82rem;
       line-height: 1;
+      color: var(--accent-strong);
     }
 
     .stat span {
@@ -340,8 +352,8 @@ function renderRouteExplorerPage(
 
     .workbench {
       display: grid;
-      grid-template-columns: minmax(300px, 0.98fr) minmax(0, 1.02fr);
-      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
       margin-top: 16px;
       align-items: start;
     }
@@ -350,6 +362,7 @@ function renderRouteExplorerPage(
     .checker {
       padding: 18px 20px;
       border-radius: 8px;
+      align-self: stretch;
     }
 
     .controls {
@@ -388,8 +401,8 @@ function renderRouteExplorerPage(
     select:focus,
     button:focus-visible,
     a:focus-visible {
-      border-color: #ffffff;
-      outline: 3px solid rgba(255, 255, 255, 0.12);
+      border-color: var(--accent-strong);
+      outline: 3px solid var(--accent-soft);
       outline-offset: 2px;
     }
 
@@ -434,7 +447,7 @@ function renderRouteExplorerPage(
     .route-button:focus-visible {
       color: var(--text);
       border-color: var(--border-strong);
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--accent-soft);
     }
 
     .input-row {
@@ -456,7 +469,7 @@ function renderRouteExplorerPage(
       display: flex;
       align-items: center;
       max-width: calc(100% - 28px);
-      color: var(--accent);
+      color: var(--sample);
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       font-size: 0.86rem;
       line-height: 1;
@@ -477,16 +490,18 @@ function renderRouteExplorerPage(
     }
 
     .route-sample-text[data-animate="true"] {
-      animation: sample-push-up 220ms ease-out;
+      animation: sample-push-up 320ms ease-out;
     }
 
     .action {
       flex: 0 0 auto;
+      min-height: 46px;
       padding: 0 16px;
     }
 
     input[aria-invalid="true"] {
-      border-color: rgba(255, 255, 255, 0.62);
+      border-color: var(--warning);
+      outline: 3px solid rgba(214, 163, 127, 0.16);
     }
 
     .result {
@@ -503,6 +518,11 @@ function renderRouteExplorerPage(
     .result strong {
       color: var(--text);
       font-weight: 650;
+    }
+
+    .result a {
+      color: var(--accent-strong);
+      text-underline-offset: 4px;
     }
 
     .toolbar {
@@ -605,8 +625,8 @@ function renderRouteExplorerPage(
       padding: 6px 10px;
       border: 1px solid var(--border);
       border-radius: 7px;
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.06);
+      color: var(--accent-strong);
+      background: rgba(255, 255, 255, 0.055);
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       font-size: 0.77rem;
       overflow-wrap: anywhere;
@@ -622,8 +642,8 @@ function renderRouteExplorerPage(
       flex: 0 0 auto;
       padding: 2px 6px;
       border-radius: 999px;
-      color: #d2d2d5;
-      background: rgba(255, 255, 255, 0.095);
+      color: var(--accent-strong);
+      background: var(--accent-soft);
       font-family: Inter, ui-sans-serif, system-ui, sans-serif;
       font-size: 0.68rem;
       white-space: nowrap;
@@ -665,19 +685,24 @@ function renderRouteExplorerPage(
 
     .status-pill {
       padding: 2px 8px;
-      border: 1px solid rgba(255, 255, 255, 0.42);
+      border: 1px solid rgba(139, 199, 168, 0.62);
       border-radius: 999px;
-      color: #050505;
-      background: var(--accent);
+      color: #06120d;
+      background: var(--active);
       font-size: 0.68rem;
       font-weight: 720;
       line-height: 1.3;
     }
 
     .status-code {
-      color: var(--text);
+      padding: 2px 7px;
+      border: 1px solid rgba(190, 183, 210, 0.26);
+      border-radius: 999px;
+      color: var(--code);
+      background: var(--code-soft);
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       font-size: 0.76rem;
+      line-height: 1.3;
     }
 
     .route-button {
@@ -915,6 +940,7 @@ function renderRouteExplorerPage(
       const checkResult = document.getElementById("checkResult");
       const kindButtons = Array.from(document.querySelectorAll("[data-filter-kind]"));
       const routeSamples = buildRouteSamples(allRoutes.map((entry) => entry.route));
+      const routeSampleIntervalMs = 4200;
       const state = {
         base: "all",
         kind: "all",
@@ -926,7 +952,7 @@ function renderRouteExplorerPage(
       populateBaseSelect();
       renderRouteSample(false);
       render();
-      setInterval(rotateRouteSample, 2400);
+      setInterval(rotateRouteSample, routeSampleIntervalMs);
 
       filterInput.addEventListener("input", () => {
         state.query = filterInput.value.trim().toLowerCase();

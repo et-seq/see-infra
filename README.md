@@ -179,7 +179,7 @@ Supported redirect status values are `301`, `302`, `303`, `307`, and `308`. The 
 
 The root route index derives its displayed destination cards and filters from the same redirect registry. Route labels are title-cased automatically, but technical slugs that should display as legal names or acronyms can be added to `SEGMENT_LABELS` in `src/base-page.ts`. The route checker uses the embedded route data in the page, so checks do not make additional Worker requests.
 
-The route index UI is static HTML with client-side filtering. It uses a dark monochrome palette with a restrained cool blue-grey accent for samples and active redirect badges, and it includes responsive breakpoints for desktop, tablet, and common mobile widths.
+The route index UI is static HTML with client-side filtering. It uses a dark-neutral palette with separate accent roles for route samples, active redirect state, and HTTP code metadata, and it includes responsive breakpoints for desktop, tablet, and common mobile widths. Route-check suggestions rotate in the client at a deliberately slow cadence so the box reads as a hint rather than prefilled user input.
 
 ## Jurisdictions And Aliases
 
