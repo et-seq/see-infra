@@ -105,10 +105,10 @@ const routeCount = destinations.reduce(
 // remains the lightweight normalized map lookup in the resolver.
 export const BASE_PAGE_HTML = renderRouteExplorerPage(destinations, {
   documentTitle: "[see.etseq.co] Current Routing",
-  eyebrow: "See.Etseq.Co Routing",
+  eyebrow: "Routing Directory",
   heading: "[see.etseq.co] Current Routing",
-  lede: "Canonical legal-reference redirects currently served by this Worker.",
-  initialResult: "Ready",
+  lede: "Current legal-reference redirects and path options served by this Worker.",
+  initialResult: "Awaiting Route",
   checkCurrentPath: false,
 });
 
@@ -200,13 +200,16 @@ function renderRouteExplorerPage(
     :root {
       color-scheme: dark;
       --background: #050505;
-      --surface: rgba(20, 20, 22, 0.78);
+      --surface: rgba(18, 18, 20, 0.78);
+      --surface-raised: rgba(25, 25, 28, 0.84);
       --surface-subtle: rgba(255, 255, 255, 0.055);
       --border: rgba(255, 255, 255, 0.13);
       --border-strong: rgba(255, 255, 255, 0.26);
       --text: #f4f4f5;
       --muted: #a8a8ad;
       --dim: #77777e;
+      --accent: #9ec7d3;
+      --accent-soft: rgba(158, 199, 211, 0.16);
       --shadow: rgba(0, 0, 0, 0.45);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
@@ -222,8 +225,13 @@ function renderRouteExplorerPage(
       background:
         linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 340px),
         var(--background);
-      background-size: 40px 40px, 40px 40px, auto;
+      background-size: 40px 40px, 40px 40px, auto, auto;
+      line-height: 1.5;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
     }
 
     a {
@@ -242,9 +250,9 @@ function renderRouteExplorerPage(
     }
 
     .shell {
-      width: min(1180px, calc(100% - 32px));
+      width: min(1160px, calc(100% - 32px));
       margin: 0 auto;
-      padding: 36px 0 42px;
+      padding: 32px 0 46px;
     }
 
     .topbar,
@@ -254,58 +262,62 @@ function renderRouteExplorerPage(
     .empty {
       border: 1px solid var(--border);
       background: var(--surface);
-      box-shadow: 0 24px 80px var(--shadow);
+      box-shadow: 0 22px 70px var(--shadow);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
     }
 
     .topbar {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 28px;
+      grid-template-columns: minmax(0, 1fr) minmax(210px, auto);
+      gap: 24px;
       align-items: end;
-      padding: 28px;
+      padding: 30px 32px;
       border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015)),
+        var(--surface);
     }
 
     .eyebrow,
     .field-label,
     .meta-label {
       color: var(--muted);
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       line-height: 1.2;
     }
 
     .eyebrow {
       margin: 0 0 10px;
+      color: var(--accent);
     }
 
     h1 {
       margin: 0;
-      font-size: 4.8rem;
-      line-height: 0.95;
-      font-weight: 720;
+      font-size: 3.45rem;
+      line-height: 1.02;
+      font-weight: 700;
       letter-spacing: 0;
       overflow-wrap: anywhere;
     }
 
     .lede {
-      max-width: 760px;
-      margin: 18px 0 0;
+      max-width: 680px;
+      margin: 16px 0 0;
       color: var(--muted);
-      font-size: 1rem;
-      line-height: 1.7;
+      font-size: 0.98rem;
+      line-height: 1.65;
     }
 
     .stats {
       display: grid;
       grid-template-columns: repeat(2, minmax(96px, 1fr));
       gap: 10px;
-      min-width: 230px;
+      min-width: 218px;
     }
 
     .stat {
-      min-height: 92px;
+      min-height: 86px;
       padding: 16px;
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -314,7 +326,7 @@ function renderRouteExplorerPage(
 
     .stat strong {
       display: block;
-      font-size: 2rem;
+      font-size: 1.82rem;
       line-height: 1;
     }
 
@@ -328,7 +340,7 @@ function renderRouteExplorerPage(
 
     .workbench {
       display: grid;
-      grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.05fr);
+      grid-template-columns: minmax(300px, 0.98fr) minmax(0, 1.02fr);
       gap: 16px;
       margin-top: 16px;
       align-items: start;
@@ -336,7 +348,7 @@ function renderRouteExplorerPage(
 
     .controls,
     .checker {
-      padding: 18px;
+      padding: 18px 20px;
       border-radius: 8px;
     }
 
@@ -353,13 +365,19 @@ function renderRouteExplorerPage(
     input,
     select {
       width: 100%;
-      min-height: 44px;
+      min-height: 46px;
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 0 13px;
+      padding: 0 14px;
       color: var(--text);
       background: rgba(0, 0, 0, 0.38);
       outline: none;
+    }
+
+    input:hover,
+    select:hover {
+      border-color: var(--border-strong);
+      background: rgba(0, 0, 0, 0.46);
     }
 
     select {
@@ -389,7 +407,7 @@ function renderRouteExplorerPage(
     .segmented {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 6px;
+      gap: 5px;
       padding: 5px;
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -404,6 +422,10 @@ function renderRouteExplorerPage(
       border-radius: 7px;
       color: var(--muted);
       background: transparent;
+      transition:
+        border-color 140ms ease,
+        background 140ms ease,
+        color 140ms ease;
     }
 
     .segment[aria-pressed="true"],
@@ -434,7 +456,7 @@ function renderRouteExplorerPage(
       display: flex;
       align-items: center;
       max-width: calc(100% - 28px);
-      color: #d1b76a;
+      color: var(--accent);
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       font-size: 0.86rem;
       line-height: 1;
@@ -468,9 +490,9 @@ function renderRouteExplorerPage(
     }
 
     .result {
-      min-height: 72px;
+      min-height: 70px;
       margin-top: 14px;
-      padding: 13px;
+      padding: 14px;
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--muted);
@@ -495,16 +517,26 @@ function renderRouteExplorerPage(
 
     .destination-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr));
       gap: 14px;
     }
 
     .destination {
       display: grid;
       grid-template-rows: auto 1fr auto;
-      min-height: 282px;
+      min-height: 274px;
       border-radius: 8px;
       overflow: hidden;
+      transition:
+        border-color 160ms ease,
+        background 160ms ease,
+        transform 160ms ease;
+    }
+
+    .destination:hover {
+      border-color: rgba(255, 255, 255, 0.22);
+      background: var(--surface-raised);
+      transform: translateY(-1px);
     }
 
     .destination-header,
@@ -517,13 +549,14 @@ function renderRouteExplorerPage(
       display: grid;
       gap: 8px;
       border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent);
     }
 
     .destination-title {
       margin: 0;
-      font-size: 1.08rem;
+      font-size: 1.02rem;
       line-height: 1.35;
-      font-weight: 680;
+      font-weight: 670;
     }
 
     .destination-id {
@@ -543,7 +576,7 @@ function renderRouteExplorerPage(
       display: block;
       margin-top: 6px;
       color: var(--muted);
-      font-size: 0.86rem;
+      font-size: 0.84rem;
       line-height: 1.45;
       overflow-wrap: anywhere;
       text-decoration: none;
@@ -569,15 +602,20 @@ function renderRouteExplorerPage(
       max-width: 100%;
       min-width: 0;
       min-height: 32px;
-      padding: 6px 9px;
+      padding: 6px 10px;
       border: 1px solid var(--border);
       border-radius: 7px;
       color: var(--text);
       background: rgba(255, 255, 255, 0.06);
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-      font-size: 0.78rem;
+      font-size: 0.77rem;
       overflow-wrap: anywhere;
       text-decoration: none;
+    }
+
+    .route:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.09);
     }
 
     .route-kind {
@@ -585,7 +623,7 @@ function renderRouteExplorerPage(
       padding: 2px 6px;
       border-radius: 999px;
       color: #d2d2d5;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.095);
       font-family: Inter, ui-sans-serif, system-ui, sans-serif;
       font-size: 0.68rem;
       white-space: nowrap;
@@ -599,7 +637,7 @@ function renderRouteExplorerPage(
     .destination-footer {
       display: flex;
       justify-content: space-between;
-      gap: 10px;
+      gap: 12px;
       color: var(--dim);
       font-size: 0.78rem;
       align-items: center;
@@ -630,7 +668,7 @@ function renderRouteExplorerPage(
       border: 1px solid rgba(255, 255, 255, 0.42);
       border-radius: 999px;
       color: #050505;
-      background: #f4f4f5;
+      background: var(--accent);
       font-size: 0.68rem;
       font-weight: 720;
       line-height: 1.3;
@@ -683,10 +721,21 @@ function renderRouteExplorerPage(
       }
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 1ms !important;
+        scroll-behavior: auto !important;
+        transition-duration: 1ms !important;
+      }
+    }
+
     @media (max-width: 820px) {
       .shell {
         width: min(100% - 24px, 1180px);
-        padding-top: 16px;
+        padding-top: 18px;
+        padding-bottom: 34px;
       }
 
       .topbar,
@@ -697,16 +746,28 @@ function renderRouteExplorerPage(
       }
 
       .topbar {
+        gap: 20px;
         padding: 22px;
       }
 
       h1 {
-        font-size: 2.42rem;
+        font-size: 2.24rem;
+        line-height: 1.06;
+      }
+
+      .lede {
+        margin-top: 14px;
+        font-size: 0.94rem;
+        line-height: 1.6;
       }
 
       .stats {
         min-width: 0;
         width: 100%;
+      }
+
+      .stat {
+        min-height: 76px;
       }
 
       .input-row,
@@ -722,9 +783,10 @@ function renderRouteExplorerPage(
       }
     }
 
-    @media (max-width: 390px) {
+    @media (max-width: 520px) {
       .shell {
         width: calc(100% - 16px);
+        padding-top: 12px;
       }
 
       .topbar,
@@ -737,7 +799,20 @@ function renderRouteExplorerPage(
       }
 
       h1 {
-        font-size: 2rem;
+        font-size: 1.55rem;
+        line-height: 1.1;
+      }
+
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .stat strong {
+        font-size: 1.55rem;
+      }
+
+      .route-sample {
+        font-size: 0.8rem;
       }
 
       .segmented {
@@ -776,7 +851,7 @@ function renderRouteExplorerPage(
         <div class="filter-grid">
           <label class="field">
             <span class="field-label">Search</span>
-            <input id="filterInput" type="search" autocomplete="off" placeholder="Search Route, Destination, Or Target">
+            <input id="filterInput" type="search" autocomplete="off" placeholder="Search Routes">
           </label>
           <label class="field">
             <span class="field-label">Base Jurisdiction</span>

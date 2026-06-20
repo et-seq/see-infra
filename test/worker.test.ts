@@ -33,7 +33,7 @@ describe("worker entrypoint", () => {
       'name="viewport" content="width=device-width, initial-scale=1"',
     );
     expect(body).toContain("@media (max-width: 820px)");
-    expect(body).toContain("@media (max-width: 390px)");
+    expect(body).toContain("@media (max-width: 520px)");
     expect(body).toContain("route-path");
     const jurisdictionTagIndex = body.indexOf('route-kind">Jurisdiction');
     const canadaRouteIndex = body.indexOf('route-path">/canada/cipo');
