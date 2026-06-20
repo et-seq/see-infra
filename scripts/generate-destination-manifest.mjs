@@ -1,4 +1,4 @@
-import { readdir, writeFile } from "node:fs/promises";
+import { readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -38,11 +38,24 @@ export const redirectDefinitions = [
 ${entries ? `${entries}\n` : ""}] as const satisfies readonly RedirectDefinition[];
 `;
 
-await writeFile(manifestPath, manifest);
-
 const relativeManifestPath = relative(repoRoot, manifestPath);
 const noun = destinationFiles.length === 1 ? "destination" : "destinations";
 
-console.log(
-  `Generated ${relativeManifestPath} with ${destinationFiles.length} ${noun}.`,
-);
+let existingManifest = "";
+
+try {
+  existingManifest = await readFile(manifestPath, "utf8");
+} catch {
+  existingManifest = "";
+}
+
+if (existingManifest !== manifest) {
+  await writeFile(manifestPath, manifest);
+  console.log(
+    `Generated ${relativeManifestPath} with ${destinationFiles.length} ${noun}.`,
+  );
+} else {
+  console.log(
+    `Manifest ${relativeManifestPath} already current with ${destinationFiles.length} ${noun}.`,
+  );
+}

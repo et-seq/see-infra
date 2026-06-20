@@ -10,15 +10,28 @@ describe("worker entrypoint", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/html");
     expect(response.headers.get("cache-control")).toBe("public, max-age=300");
-    expect(body).toContain("Destination Index");
+    expect(body).toContain("[see.etseq.co] Current Routing");
     expect(body).toContain("/canada/cipo");
     expect(body).toContain("routeData");
+    expect(body).toContain("Base Jurisdiction");
+    expect(body).toContain("Route Level Filters");
+    expect(body).toContain("level-filter-in");
+    expect(body).toContain("All Jurisdictions");
+    expect(body).toContain("Target URL");
+    expect(body).toContain("Available Routes");
+    expect(body).toContain("Redirect Status");
+    expect(body).toContain("302: Temporary Redirect. Redirection Active.");
     expect(body).toContain(
       'name="viewport" content="width=device-width, initial-scale=1"',
     );
     expect(body).toContain("@media (max-width: 820px)");
     expect(body).toContain("@media (max-width: 390px)");
     expect(body).toContain("route-path");
+    const jurisdictionTagIndex = body.indexOf('route-kind">Jurisdiction');
+    const canadaRouteIndex = body.indexOf('route-path">/canada/cipo');
+    expect(jurisdictionTagIndex).toBeGreaterThanOrEqual(0);
+    expect(canadaRouteIndex).toBeGreaterThanOrEqual(0);
+    expect(jurisdictionTagIndex).toBeLessThan(canadaRouteIndex);
   });
 
   it("redirects matching paths and preserves request query parameters", async () => {
