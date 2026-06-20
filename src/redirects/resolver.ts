@@ -24,6 +24,7 @@ interface IndexedRedirect {
   readonly segments: readonly string[];
   readonly description: string;
   readonly kind: RouteDefinition["kind"];
+  readonly segmentLabels: Readonly<Record<string, string>>;
 }
 
 interface BuiltRedirectIndex {
@@ -102,6 +103,7 @@ function buildRouteIndex(
     definitionIds.add(normalizedId);
 
     const target = normalizeRedirectTarget(definition);
+    const definitionSegmentLabels = normalizeDefinitionSegmentLabels(definition);
 
     if (definition.routes.length === 0) {
       throw new Error(`Redirect definition "${normalizedId}" has no routes`);
@@ -117,10 +119,18 @@ function buildRouteIndex(
         );
       }
 
-      const { canonicalSegments, indexedSegmentSets } =
+      const {
+        canonicalSegments,
+        indexedSegmentSets,
+        segmentLabels: routeSegmentLabels,
+      } =
         route.kind === "jurisdiction"
           ? normalizeJurisdictionRouteSegments(route.segments)
           : normalizeShortcutRouteSegments(route.segments);
+      const segmentLabels = {
+        ...routeSegmentLabels,
+        ...definitionSegmentLabels,
+      };
       const canonicalRouteKey = routeKeyFromSegments(canonicalSegments);
 
       if (!canonicalRouteKey) {
@@ -141,6 +151,7 @@ function buildRouteIndex(
         segments: canonicalSegments,
         description: definition.description,
         kind: route.kind,
+        segmentLabels,
       };
 
       for (const indexedSegments of indexedSegmentSets) {
@@ -163,6 +174,7 @@ function buildRouteIndex(
         status: indexedRedirect.status,
         kind: indexedRedirect.kind,
         description: indexedRedirect.description,
+        segmentLabels: indexedRedirect.segmentLabels,
       });
     }
   }
@@ -204,6 +216,25 @@ function normalizeRedirectTarget(definition: RedirectDefinition) {
   };
 }
 
+function normalizeDefinitionSegmentLabels(definition: RedirectDefinition) {
+  const labels: Record<string, string> = {};
+
+  for (const [rawSegment, rawLabel] of Object.entries(
+    definition.segmentLabels ?? {},
+  )) {
+    const segment = normalizeSegment(rawSegment);
+    const label = rawLabel.trim();
+
+    if (!segment || !label) {
+      continue;
+    }
+
+    labels[segment] = label;
+  }
+
+  return labels;
+}
+
 function normalizeSegments(pathnameOrSegments: string | readonly string[]) {
   const rawSegments =
     typeof pathnameOrSegments === "string"
@@ -243,6 +274,7 @@ function normalizeShortcutRouteSegments(
   return {
     canonicalSegments,
     indexedSegmentSets: dedupeSegmentSets(indexedSegmentSets),
+    segmentLabels: {},
   };
 }
 
@@ -250,6 +282,7 @@ function normalizeJurisdictionRouteSegments(
   segments: JurisdictionPathSegments,
 ) {
   const canonicalSegments: string[] = [];
+  const segmentLabels: Record<string, string> = {};
   let indexedSegmentSets: string[][] = [[]];
 
   for (const segment of segments) {
@@ -266,6 +299,9 @@ function normalizeJurisdictionRouteSegments(
     }
 
     canonicalSegments.push(alternatives[0]);
+    if (typeof segment !== "string" && segment.label.trim()) {
+      segmentLabels[alternatives[0]] = segment.label.trim();
+    }
     indexedSegmentSets = indexedSegmentSets.flatMap((indexedSegments) =>
       alternatives.map((alternative) => [...indexedSegments, alternative]),
     );
@@ -274,6 +310,7 @@ function normalizeJurisdictionRouteSegments(
   return {
     canonicalSegments,
     indexedSegmentSets: dedupeSegmentSets(indexedSegmentSets),
+    segmentLabels,
   };
 }
 

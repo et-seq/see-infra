@@ -150,6 +150,9 @@ export default defineRedirectDestination({
   id: "scotus",
   target: "https://www.supremecourt.gov/opinions/slipopinion/25",
   description: "Supreme Court of the United States",
+  segmentLabels: {
+    scotus: "SCOTUS",
+  },
   routes: [
     {
       segments: ["scotus"],
@@ -168,6 +171,7 @@ Route fields:
 - `id`: stable unique identifier for the destination.
 - `target`: absolute `https://` or `http://` URL.
 - `description`: human-readable target name.
+- `segmentLabels`: optional display labels for route segments owned by this destination.
 - `routes`: one or more path definitions.
 - `segments`: path parts without slashes, using strings or segment alias arrays.
 - `kind`: `"shortcut"` for direct shortcuts or `"jurisdiction"` for jurisdiction paths.
@@ -177,7 +181,9 @@ Route fields:
 
 Supported redirect status values are `301`, `302`, `303`, `307`, and `308`. The default is `303`.
 
-The root route index derives its displayed destination cards and filters from the same redirect registry. Route labels are title-cased automatically, but technical slugs that should display as legal names or acronyms can be added to `SEGMENT_LABELS` in `src/base-page.ts`. The route checker uses the embedded route data in the page, so checks do not make additional Worker requests.
+The root route index derives its displayed destination cards and filters from the same redirect registry. Route-specific display labels are read from destination `segmentLabels` and jurisdiction segment labels. When no explicit label is supplied, the page falls back to generic title casing for the segment. The route checker uses the embedded route data in the page, so checks do not make additional Worker requests.
+
+Do not add destination-specific or jurisdiction-specific label maps to webpage code. Routing display vocabulary should live in `src/redirects/destinations/` or `src/redirects/jurisdictions/` with the route metadata it describes.
 
 The route index UI is static HTML with client-side filtering. It uses a dark-neutral palette with separate accent roles for route samples, active redirect state, and HTTP code metadata, and it includes responsive breakpoints for desktop, tablet, and common mobile widths. Route-check suggestions rotate in the client at a deliberately slow cadence so the box reads as a hint rather than prefilled user input.
 
@@ -191,8 +197,12 @@ Example jurisdiction file:
 import { defineJurisdictionSegment } from "../types";
 
 export const us = {
-  root: defineJurisdictionSegment("us", ["usa", "united-states"]),
-  ca: defineJurisdictionSegment("ca", ["cal", "california"]),
+  root: defineJurisdictionSegment(
+    "us",
+    ["usa", "united-states"],
+    "United States",
+  ),
+  ca: defineJurisdictionSegment("ca", ["cal", "california"], "California"),
 } as const;
 ```
 

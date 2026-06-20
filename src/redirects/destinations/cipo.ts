@@ -8,6 +8,9 @@ export default defineRedirectDestination({
   id: "cipo",
   target: CIPO_URL,
   description: "Canadian Intellectual Property Office",
+  segmentLabels: {
+    cipo: "CIPO",
+  },
   routes: [
     {
       segments: [canada.root, "cipo"],

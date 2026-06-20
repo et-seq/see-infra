@@ -285,4 +285,26 @@ describe("redirect resolver", () => {
     );
     expect(new Set(paths).size).toBe(paths.length);
   });
+
+  it("lists route display labels from destination and jurisdiction metadata", () => {
+    expect(listRedirects()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "/canada/cipo",
+          segmentLabels: {
+            canada: "Canada",
+            cipo: "CIPO",
+          },
+        }),
+        expect.objectContaining({
+          path: "/us/u.s.c",
+          segmentLabels: {
+            us: "United States",
+            "u.s.c": "U.S.C.",
+            usc: "USC",
+          },
+        }),
+      ]),
+    );
+  });
 });

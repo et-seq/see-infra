@@ -7,7 +7,10 @@ const CIPO_TRADEMARK_SEARCH_URL =
 export default defineRedirectDestination({
   id: "cipo-trademark-search",
   target: CIPO_TRADEMARK_SEARCH_URL,
-  description: "Canadian trademark search",
+  description: "Canadian Trademark Search",
+  segmentLabels: {
+    tm: "Trade Marks",
+  },
   routes: [
     {
       segments: [canada.root, "tm", "search"],

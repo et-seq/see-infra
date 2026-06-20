@@ -10,9 +10,12 @@ describe("worker entrypoint", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/html");
     expect(response.headers.get("cache-control")).toBe("public, max-age=300");
-    expect(body).toContain("[see.etseq.co] Current Routing");
+    expect(body).toContain("See Infra - A Legal URL Router");
     expect(body).toContain("/canada/cipo");
     expect(body).toContain("routeData");
+    expect(body).toContain("segmentLabels");
+    expect(body).toContain('"cipo":"CIPO"');
+    expect(body).toContain('"us":"United States"');
     expect(body).toContain("Base Jurisdiction");
     expect(body).toContain("Route Level Filters");
     expect(body).toContain("level-filter-in");

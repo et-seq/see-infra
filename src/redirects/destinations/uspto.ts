@@ -7,6 +7,9 @@ export default defineRedirectDestination({
   id: "uspto",
   target: USPTO_URL,
   description: "United States Patent and Trademark Office",
+  segmentLabels: {
+    uspto: "USPTO",
+  },
   routes: [
     {
       segments: ["uspto"],

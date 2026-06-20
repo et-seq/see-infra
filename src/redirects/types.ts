@@ -11,6 +11,7 @@ const jurisdictionSegmentBrand: unique symbol = Symbol("jurisdictionSegment");
 export interface JurisdictionSegment {
   readonly canonical: string;
   readonly aliases: readonly string[];
+  readonly label: string;
   readonly [jurisdictionSegmentBrand]: true;
 }
 
@@ -42,6 +43,7 @@ export interface RedirectDefinition {
   readonly id: string;
   readonly target: string;
   readonly description: string;
+  readonly segmentLabels?: Readonly<Record<string, string>>;
   readonly defaultStatus?: RedirectStatus;
   readonly preserveQuery?: boolean;
   readonly routes: readonly RouteDefinition[];
@@ -66,11 +68,13 @@ export interface ListedRedirect {
   readonly status: RedirectStatus;
   readonly kind: RouteKind;
   readonly description: string;
+  readonly segmentLabels: Readonly<Record<string, string>>;
 }
 
 export function defineJurisdictionSegment(
   canonical: string,
   aliases: readonly string[] = [],
+  label?: string,
 ): JurisdictionSegment {
   const normalizedCanonical = normalizeJurisdictionPart(canonical);
   const normalizedAliases = aliases
@@ -80,6 +84,7 @@ export function defineJurisdictionSegment(
   return {
     canonical: normalizedCanonical,
     aliases: [...new Set(normalizedAliases)],
+    label: normalizeDisplayLabel(label) || normalizedCanonical,
     [jurisdictionSegmentBrand]: true,
   };
 }
@@ -92,6 +97,10 @@ function normalizeJurisdictionPart(part: string) {
   }
 
   return normalizedPart;
+}
+
+function normalizeDisplayLabel(label: string | undefined) {
+  return label?.trim() ?? "";
 }
 
 export function defineRedirectDestination<T extends RedirectDefinition>(

@@ -6,6 +6,9 @@ export default defineRedirectDestination({
   id: "mulr",
   target: MULR_URL,
   description: "Melbourne University Law Review",
+  segmentLabels: {
+    mulr: "MULR",
+  },
   routes: [
     {
       segments: ["mulr"],

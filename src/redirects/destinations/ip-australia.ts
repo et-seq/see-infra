@@ -7,6 +7,10 @@ export default defineRedirectDestination({
   id: "ip-australia",
   target: IP_AUSTRALIA_URL,
   description: "IP Australia",
+  segmentLabels: {
+    ipa: "IP Australia",
+    ipaus: "IP Australia",
+  },
   routes: [
     {
       segments: ["ipaus"],

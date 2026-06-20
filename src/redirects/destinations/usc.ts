@@ -7,6 +7,10 @@ export default defineRedirectDestination({
   id: "usc",
   target: USC_URL,
   description: "United States Code",
+  segmentLabels: {
+    usc: "USC",
+    "u.s.c": "U.S.C.",
+  },
   routes: [
     {
       segments: [us.root, "usc"],

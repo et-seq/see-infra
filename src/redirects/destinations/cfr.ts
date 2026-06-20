@@ -7,6 +7,10 @@ export default defineRedirectDestination({
   id: "cfr",
   target: CFR_URL,
   description: "Code of Federal Regulations",
+  segmentLabels: {
+    cfr: "CFR",
+    "c.f.r": "C.F.R.",
+  },
   routes: [
     {
       segments: [us.root, "cfr"],

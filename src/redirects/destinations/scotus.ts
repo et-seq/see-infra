@@ -7,6 +7,9 @@ export default defineRedirectDestination({
   id: "scotus",
   target: SCOTUS_URL,
   description: "Supreme Court of the United States",
+  segmentLabels: {
+    scotus: "SCOTUS",
+  },
   routes: [
     {
       segments: ["scotus"],

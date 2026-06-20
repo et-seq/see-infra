@@ -15,6 +15,7 @@ interface RouteView {
   readonly kind: RouteKind;
   readonly kindLabel: string;
   readonly segments: readonly string[];
+  readonly segmentLabels: Readonly<Record<string, string>>;
   readonly baseSegment: string;
   readonly baseLabel: string;
 }
@@ -29,45 +30,7 @@ interface RouteExplorerPageOptions {
 }
 
 const SHORTCUT_BASE_SEGMENT = "__shortcut";
-
-const BASE_LABELS: Record<string, string> = {
-  aus: "Australia",
-  canada: "Canada",
-  us: "United States",
-  [SHORTCUT_BASE_SEGMENT]: "Shortcuts",
-};
-
-const SEGMENT_LABELS: Record<string, string> = {
-  aus: "Australia",
-  canada: "Canada",
-  cfr: "CFR",
-  cipo: "CIPO",
-  "c.f.r": "C.F.R.",
-  gs_manual: "Goods and Services Manual",
-  hca: "HCA",
-  ipa: "IP Australia",
-  ipa_manual: "IP Australia Manual",
-  ipaus: "IP Australia",
-  mulr: "MULR",
-  scotus: "SCOTUS",
-  search: "Search",
-  tm: "Trade Marks",
-  us: "United States",
-  usc: "USC",
-  uspto: "USPTO",
-  "u.s.c": "U.S.C.",
-};
-
-const TITLE_CASE_ACRONYMS = new Set([
-  "CFR",
-  "CIPO",
-  "HCA",
-  "IP",
-  "MULR",
-  "SCOTUS",
-  "US",
-  "USPTO",
-]);
+const SHORTCUT_BASE_LABEL = "Shortcuts";
 
 const TITLE_CASE_MINOR_WORDS = new Set([
   "and",
@@ -135,7 +98,7 @@ function buildDestinationViews(
       destinationMap.set(redirect.id, {
         id: redirect.id,
         identifiers: buildDestinationIdentifiers(redirect.id, [route]),
-        title: toTitleCase(redirect.description),
+        title: redirect.description,
         target: redirect.target,
         routes: [route],
       });
@@ -196,8 +159,12 @@ function buildRouteView(redirect: ListedRedirect): RouteView {
     kind: redirect.kind,
     kindLabel: toTitleCase(redirect.kind),
     segments,
+    segmentLabels: redirect.segmentLabels,
     baseSegment,
-    baseLabel: formatSegmentLabel(baseSegment),
+    baseLabel:
+      baseSegment === SHORTCUT_BASE_SEGMENT
+        ? SHORTCUT_BASE_LABEL
+        : formatSegmentLabel(baseSegment, redirect.segmentLabels),
   };
 }
 
@@ -1180,7 +1147,10 @@ function renderRouteExplorerPage(
             continue;
           }
 
-          seen.set(segments[index], formatSegmentLabel(segments[index]));
+          seen.set(
+            segments[index],
+            formatSegmentLabel(segments[index], route.segmentLabels),
+          );
         }
 
         return Array.from(seen.entries()).sort((left, right) =>
@@ -1457,14 +1427,8 @@ function renderRouteExplorerPage(
         return "/" + path.toLowerCase().split("/").map((segment) => segment.trim()).filter(Boolean).join("/");
       }
 
-      function formatSegmentLabel(segment) {
-        const knownLabel = ${escapeScriptJson(BASE_LABELS)}[segment] || ${escapeScriptJson(SEGMENT_LABELS)}[segment];
-
-        if (knownLabel) {
-          return knownLabel;
-        }
-
-        return toTitleCase(segment.replace(/[._-]+/g, " "));
+      function formatSegmentLabel(segment, segmentLabels) {
+        return segmentLabels[segment] || toTitleCase(segment.replace(/[._-]+/g, " "));
       }
 
       function toTitleCase(value) {
@@ -1572,12 +1536,11 @@ function renderIdentifierList(identifiers: readonly string[]) {
     .join("");
 }
 
-function formatSegmentLabel(segment: string) {
-  return (
-    BASE_LABELS[segment] ??
-    SEGMENT_LABELS[segment] ??
-    toTitleCase(segment.replace(/[._-]+/g, " "))
-  );
+function formatSegmentLabel(
+  segment: string,
+  segmentLabels: Readonly<Record<string, string>>,
+) {
+  return segmentLabels[segment] ?? toTitleCase(segment.replace(/[._-]+/g, " "));
 }
 
 function toTitleCase(value: string) {
@@ -1585,13 +1548,8 @@ function toTitleCase(value: string) {
 
   return words
     .map((word, index) => {
-      const normalizedWord = word.replace(/[^a-z0-9]/gi, "").toUpperCase();
       const lowerWord = word.toLowerCase();
       const isEdgeWord = index === 0 || index === words.length - 1;
-
-      if (TITLE_CASE_ACRONYMS.has(normalizedWord)) {
-        return normalizedWord;
-      }
 
       if (!isEdgeWord && TITLE_CASE_MINOR_WORDS.has(lowerWord)) {
         return lowerWord;

@@ -7,7 +7,10 @@ const HCA_JUDGMENTS_URL =
 export default defineRedirectDestination({
   id: "hca",
   target: HCA_JUDGMENTS_URL,
-  description: "High Court of Australia judgments",
+  description: "High Court of Australia Judgments",
+  segmentLabels: {
+    hca: "HCA",
+  },
   routes: [
     {
       segments: ["hca"],
