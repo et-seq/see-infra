@@ -20,6 +20,9 @@ describe("worker entrypoint", () => {
     expect(body).toContain("levelFilters.replaceChildren();");
     expect(body).toContain("All Jurisdictions");
     expect(body).toContain("Target URL");
+    expect(body).toContain("Identifiers");
+    expect(body).toContain("<li>cfr</li>");
+    expect(body).toContain("<li>c.f.r</li>");
     expect(body).toContain("Add After see.etseq.co");
     expect(body).toContain("Redirect Status");
     expect(body).toContain('id="routeSample"');

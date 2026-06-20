@@ -3,6 +3,7 @@ import type { ListedRedirect, RouteKind } from "./redirects";
 
 interface DestinationView {
   readonly id: string;
+  readonly identifiers: readonly string[];
   readonly title: string;
   readonly target: string;
   readonly routes: readonly RouteView[];
@@ -133,6 +134,7 @@ function buildDestinationViews(
     if (!existingDestination) {
       destinationMap.set(redirect.id, {
         id: redirect.id,
+        identifiers: buildDestinationIdentifiers(redirect.id, [route]),
         title: toTitleCase(redirect.description),
         target: redirect.target,
         routes: [route],
@@ -142,6 +144,10 @@ function buildDestinationViews(
 
     destinationMap.set(redirect.id, {
       ...existingDestination,
+      identifiers: buildDestinationIdentifiers(existingDestination.id, [
+        ...existingDestination.routes,
+        route,
+      ]),
       routes: [...existingDestination.routes, route],
     });
   }
@@ -154,6 +160,27 @@ function buildDestinationViews(
       ),
     }))
     .sort((left, right) => left.title.localeCompare(right.title));
+}
+
+function buildDestinationIdentifiers(
+  id: string,
+  routes: readonly RouteView[],
+): readonly string[] {
+  const identifiers = new Set<string>([id]);
+
+  for (const route of routes) {
+    const routeIdentifier = route.segments.at(-1);
+
+    if (routeIdentifier) {
+      identifiers.add(routeIdentifier);
+    }
+  }
+
+  return [...identifiers].sort((left, right) => {
+    if (left === id) return -1;
+    if (right === id) return 1;
+    return left.localeCompare(right);
+  });
 }
 
 function buildRouteView(redirect: ListedRedirect): RouteView {
@@ -580,7 +607,21 @@ function renderRouteExplorerPage(
     }
 
     .destination-id {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 6px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .destination-id li {
+      max-width: 100%;
+      padding: 3px 7px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
       color: var(--dim);
+      background: rgba(255, 255, 255, 0.035);
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       font-size: 0.75rem;
       overflow-wrap: anywhere;
@@ -1204,6 +1245,7 @@ function renderRouteExplorerPage(
 
         return [
           destination.id,
+          destination.identifiers.join(" "),
           destination.title,
           destination.target,
           route.baseLabel,
@@ -1339,8 +1381,8 @@ function renderRouteExplorerPage(
             '<span class="field-label">Destination</span>' +
             '<h2 class="destination-title">' + escapeHtml(destination.title) + '</h2>' +
             '<div>' +
-              '<span class="meta-label">Identifier</span>' +
-              '<div class="destination-id">' + escapeHtml(destination.id) + '</div>' +
+              '<span class="meta-label">' + escapeHtml(identifierLabel(destination.identifiers)) + '</span>' +
+              '<ul class="destination-id">' + renderIdentifierList(destination.identifiers) + '</ul>' +
             '</div>' +
           '</header>' +
           '<div class="destination-body">' +
@@ -1383,6 +1425,16 @@ function renderRouteExplorerPage(
           '<span class="status-pill">Active</span>' +
           '<span class="status-code">HTTP ' + escapeHtml(String(status)) + '</span>' +
         '</span>';
+      }
+
+      function identifierLabel(identifiers) {
+        return identifiers.length === 1 ? "Identifier" : "Identifiers";
+      }
+
+      function renderIdentifierList(identifiers) {
+        return identifiers
+          .map((identifier) => '<li>' + escapeHtml(identifier) + '</li>')
+          .join("");
       }
 
       function normalizePath(value) {
@@ -1474,8 +1526,8 @@ function renderDestinationCard(destination: DestinationView) {
           <span class="field-label">Destination</span>
           <h2 class="destination-title">${escapeHtml(destination.title)}</h2>
           <div>
-            <span class="meta-label">Identifier</span>
-            <div class="destination-id">${escapeHtml(destination.id)}</div>
+            <span class="meta-label">${escapeHtml(identifierLabel(destination.identifiers))}</span>
+            <ul class="destination-id">${renderIdentifierList(destination.identifiers)}</ul>
           </div>
         </header>
         <div class="destination-body">
@@ -1508,6 +1560,16 @@ function describeRedirectStatuses(statuses: readonly number[]) {
 
 function renderRedirectStatus(status: number) {
   return `<span class="status-item"><span class="status-pill">Active</span><span class="status-code">HTTP ${escapeHtml(String(status))}</span></span>`;
+}
+
+function identifierLabel(identifiers: readonly string[]) {
+  return identifiers.length === 1 ? "Identifier" : "Identifiers";
+}
+
+function renderIdentifierList(identifiers: readonly string[]) {
+  return identifiers
+    .map((identifier) => `<li>${escapeHtml(identifier)}</li>`)
+    .join("");
 }
 
 function formatSegmentLabel(segment: string) {
